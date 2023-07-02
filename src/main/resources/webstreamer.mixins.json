@@ -4,11 +4,12 @@
   "package": "fr.theorozier.webstreamer.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "LoaderMixin"
   ],
   "client": [
-    "WorldRendererMixin",
+    "ClientPlayerEntityMixin",
     "WorldRendererInvoker",
-    "ClientPlayerEntityMixin"
+    "WorldRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
