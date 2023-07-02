@@ -11,6 +11,9 @@ version = project.mod_version
 group = project.maven_group
 
 repositories {
+	flatDir {
+		dirs("libs")
+	}
 	maven {
 		url = "https://jitpack.io"
 	}
@@ -39,7 +42,7 @@ dependencies {
 	include "org.bytedeco:javacpp:${project.javacv_version}:windows-x86_64"
 	include "org.bytedeco:ffmpeg:6.0-${project.javacv_version}"
 	include "org.bytedeco:ffmpeg:6.0-${project.javacv_version}:linux-arm64"
-	include files("libs/:ffmpeg:6.0-${project.javacv_version}:linux-x86_64.jar")
+	include "localorg.bytedeco:ffmpeg:6.0-${project.javacv_version}:linux-x86_64"
 	include "org.bytedeco:ffmpeg:6.0-${project.javacv_version}:macosx-arm64"
 	include "org.bytedeco:ffmpeg:6.0-${project.javacv_version}:macosx-x86_64"
 	include "org.bytedeco:ffmpeg:6.0-${project.javacv_version}:windows-x86_64"
