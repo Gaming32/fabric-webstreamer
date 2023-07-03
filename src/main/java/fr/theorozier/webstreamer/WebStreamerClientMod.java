@@ -23,6 +23,8 @@ public class WebStreamerClientMod implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
 
+        System.setProperty("org.bytedeco.javacpp.logger", "slf4j");
+
         BlockEntityRendererRegistry.register(WebStreamerMod.DISPLAY_BLOCK_ENTITY, DisplayBlockEntityRenderer::new);
         BlockRenderLayerMap.INSTANCE.putBlock(WebStreamerMod.DISPLAY_BLOCK, RenderLayer.getCutout());
 
