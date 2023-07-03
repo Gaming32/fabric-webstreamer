@@ -1,5 +1,6 @@
 package fr.theorozier.webstreamer.display;
 
+import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -20,12 +21,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DisplayBlock extends BlockWithEntity {
-    
+
     private static final VoxelShape SHAPE_NORTH = VoxelShapes.cuboid(0, 0, 0.9, 1, 1, 1);
     private static final VoxelShape SHAPE_SOUTH = VoxelShapes.cuboid(0, 0, 0, 1, 1, 0.1);
     private static final VoxelShape SHAPE_WEST = VoxelShapes.cuboid(0.9, 0, 0, 1, 1, 1);
     private static final VoxelShape SHAPE_EAST = VoxelShapes.cuboid(0, 0, 0, 0.1, 1, 1);
-    
+
     public DisplayBlock() {
         super(Settings.of(Material.GLASS)
                 .sounds(BlockSoundGroup.GLASS)
@@ -34,7 +35,7 @@ public class DisplayBlock extends BlockWithEntity {
                 .dropsNothing()
                 .nonOpaque());
     }
-    
+
     @Override
     protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
         builder.add(Properties.HORIZONTAL_FACING);
@@ -50,7 +51,7 @@ public class DisplayBlock extends BlockWithEntity {
     public BlockRenderType getRenderType(BlockState state) {
         return BlockRenderType.ENTITYBLOCK_ANIMATED;
     }
-    
+
     @Nullable
     @Override
     public BlockState getPlacementState(ItemPlacementContext ctx) {
@@ -60,7 +61,7 @@ public class DisplayBlock extends BlockWithEntity {
         }
         return this.getDefaultState().with(Properties.HORIZONTAL_FACING, dir);
     }
-    
+
     @Override
     public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
         return switch (state.get(Properties.HORIZONTAL_FACING)) {
@@ -86,13 +87,9 @@ public class DisplayBlock extends BlockWithEntity {
             return ActionResult.PASS;
         }
     }
-    
-    public static boolean canPlace(@NotNull PlayerEntity player) {
-        return player.hasPermissionLevel(2);
-    }
-    
+
     public static boolean canUse(@NotNull PlayerEntity player) {
-        return player.hasPermissionLevel(2);
+        return Permissions.check(player, "webstreamer.display.use", 2);
     }
 
 }

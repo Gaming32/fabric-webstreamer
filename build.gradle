@@ -17,6 +17,9 @@ repositories {
 	maven {
 		url = "https://jitpack.io"
 	}
+	maven {
+		url = "https://oss.sonatype.org/content/repositories/snapshots"
+	}
 }
 
 dependencies {
@@ -48,6 +51,8 @@ dependencies {
 	include "org.bytedeco:ffmpeg:6.0-${project.javacv_version}:windows-x86_64"
 
 	include(implementation(annotationProcessor("com.github.LlamaLad7.MixinExtras:mixinextras-fabric:0.2.0-beta.8")))
+
+	include(modImplementation("me.lucko:fabric-permissions-api:0.2-SNAPSHOT"))
 
 }
 
