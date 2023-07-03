@@ -38,17 +38,7 @@ dependencies {
 	include "io.lindstrom:m3u8-parser:${project.m3u8_parser_version}"
 	include "org.bytedeco:javacv:${project.javacv_version}"
 	include "org.bytedeco:javacpp:${project.javacv_version}"
-	include "org.bytedeco:javacpp:${project.javacv_version}:linux-arm64"
-	include "org.bytedeco:javacpp:${project.javacv_version}:linux-x86_64"
-	include "org.bytedeco:javacpp:${project.javacv_version}:macosx-arm64"
-	include "org.bytedeco:javacpp:${project.javacv_version}:macosx-x86_64"
-	include "org.bytedeco:javacpp:${project.javacv_version}:windows-x86_64"
 	include "org.bytedeco:ffmpeg:6.0-${project.javacv_version}"
-	include "org.bytedeco:ffmpeg:6.0-${project.javacv_version}:linux-arm64"
-	include "localorg.bytedeco:ffmpeg:6.0-${project.javacv_version}:linux-x86_64"
-	include "org.bytedeco:ffmpeg:6.0-${project.javacv_version}:macosx-arm64"
-	include "org.bytedeco:ffmpeg:6.0-${project.javacv_version}:macosx-x86_64"
-	include "org.bytedeco:ffmpeg:6.0-${project.javacv_version}:windows-x86_64"
 
 	include(implementation(annotationProcessor("com.github.LlamaLad7.MixinExtras:mixinextras-fabric:0.2.0-beta.8")))
 
