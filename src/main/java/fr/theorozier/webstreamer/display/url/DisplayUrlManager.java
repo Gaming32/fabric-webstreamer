@@ -1,19 +1,24 @@
 package fr.theorozier.webstreamer.display.url;
 
-import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
+import fr.theorozier.webstreamer.WebStreamerMod;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 @Environment(EnvType.CLIENT)
 public class DisplayUrlManager {
 
-    private final Object2IntArrayMap<URI> urlCache = new Object2IntArrayMap<>();
-    private int counter = 0;
+    private final Map<URI, DisplayUrl> urlCache = new HashMap<>();
 
     public DisplayUrl allocUri(URI uri) {
-        return new DisplayUrl(uri, this.urlCache.computeIfAbsent(uri, key -> ++counter));
+        return urlCache.computeIfAbsent(uri, key -> {
+            final DisplayUrl result = new DisplayUrl(key, urlCache.size() + 1);
+            WebStreamerMod.LOGGER.info("Allocated a new display url {}.", result);
+            return result;
+        });
     }
 
 }
