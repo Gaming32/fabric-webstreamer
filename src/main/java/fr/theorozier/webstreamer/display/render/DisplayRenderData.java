@@ -17,22 +17,22 @@ import java.util.concurrent.Future;
 public class DisplayRenderData {
 
 	private final DisplayBlockEntity display;
-	
+
 	private boolean sourceDirty;
 	private Future<URI> futureUrl;
 	private DisplayUrl url;
-	
+
 	private float lastWidth = 0f;
 	private float lastHeight = 0f;
-	
+
 	private float widthOffset = 0f;
 	private float heightOffset = 0f;
-	
+
 	public DisplayRenderData(DisplayBlockEntity display) {
 		this.display = display;
 		this.sourceDirty = true;
 	}
-	
+
 	/**
 	 * Mark the render data dirty. This will force the internal URL to be updated.
 	 * This is called only from {@link DisplayBlockEntity}.
@@ -40,7 +40,7 @@ public class DisplayRenderData {
 	public void markSourceDirty() {
 		this.sourceDirty = true;
 	}
-	
+
 	/**
 	 * Get the URL of a specific display. This method must be called from {@link DisplayBlockEntityRenderer} only
 	 * in the render thread.
@@ -48,21 +48,24 @@ public class DisplayRenderData {
 	 * @return Return a non-null URL when loaded.
 	 */
 	public DisplayUrl getUrl(ExecutorService executor) {
-		
+
 		if (this.sourceDirty) {
 			this.url = null;
 			this.futureUrl = executor.submit(() -> this.display.getSource().getUri());
 			this.sourceDirty = false;
 		}
-		
+
 		if (this.futureUrl != null && this.futureUrl.isDone()) {
 			try {
 				URI uri = this.futureUrl.get();
 				if (uri == null) {
 					WebStreamerMod.LOGGER.info(this.display.makeLog("No URI found for the display."));
 				} else {
-					this.url = WebStreamerClientMod.DISPLAY_URLS.allocUri(uri);
-					WebStreamerMod.LOGGER.info(this.display.makeLog("Allocated a new display url {}."), this.url);
+					final DisplayUrl newUrl = WebStreamerClientMod.DISPLAY_URLS.allocUri(uri);
+					if (!newUrl.equals(url)) {
+						url = newUrl;
+						WebStreamerMod.LOGGER.info(this.display.makeLog("Allocated a new display url {}."), this.url);
+					}
 				}
 			} catch (InterruptedException | CancellationException e) {
 				// Cancel should not happen.
@@ -72,11 +75,11 @@ public class DisplayRenderData {
 				this.futureUrl = null;
 			}
 		}
-		
+
 		return this.url;
-		
+
 	}
-	
+
 	public float getWidthOffset() {
 		float width = this.display.getWidth();
 		if (width != this.lastWidth) {
@@ -85,7 +88,7 @@ public class DisplayRenderData {
 		}
 		return widthOffset;
 	}
-	
+
 	public float getHeightOffset() {
 		float height = this.display.getHeight();
 		if (height != this.lastHeight) {
