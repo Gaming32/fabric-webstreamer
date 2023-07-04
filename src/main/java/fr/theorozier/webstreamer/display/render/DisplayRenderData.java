@@ -16,82 +16,82 @@ import java.util.concurrent.Future;
 @Environment(EnvType.CLIENT)
 public class DisplayRenderData {
 
-	private final DisplayBlockEntity display;
+    private final DisplayBlockEntity display;
 
-	private boolean sourceDirty;
-	private Future<URI> futureUrl;
-	private DisplayUrl url;
+    private boolean sourceDirty;
+    private Future<URI> futureUrl;
+    private DisplayUrl url;
 
-	private float lastWidth = 0f;
-	private float lastHeight = 0f;
+    private float lastWidth = 0f;
+    private float lastHeight = 0f;
 
-	private float widthOffset = 0f;
-	private float heightOffset = 0f;
+    private float widthOffset = 0f;
+    private float heightOffset = 0f;
 
-	public DisplayRenderData(DisplayBlockEntity display) {
-		this.display = display;
-		this.sourceDirty = true;
-	}
+    public DisplayRenderData(DisplayBlockEntity display) {
+        this.display = display;
+        this.sourceDirty = true;
+    }
 
-	/**
-	 * Mark the render data dirty. This will force the internal URL to be updated.
-	 * This is called only from {@link DisplayBlockEntity}.
-	 */
-	public void markSourceDirty() {
-		this.sourceDirty = true;
-	}
+    /**
+     * Mark the render data dirty. This will force the internal URL to be updated.
+     * This is called only from {@link DisplayBlockEntity}.
+     */
+    public void markSourceDirty() {
+        this.sourceDirty = true;
+    }
 
-	/**
-	 * Get the URL of a specific display. This method must be called from {@link DisplayBlockEntityRenderer} only
-	 * in the render thread.
-	 * @param executor The executor to execute async code on.
-	 * @return Return a non-null URL when loaded.
-	 */
-	public DisplayUrl getUrl(ExecutorService executor) {
+    /**
+     * Get the URL of a specific display. This method must be called from {@link DisplayBlockEntityRenderer} only
+     * in the render thread.
+     * @param executor The executor to execute async code on.
+     * @return Return a non-null URL when loaded.
+     */
+    public DisplayUrl getUrl(ExecutorService executor) {
 
-		if (this.sourceDirty) {
-			this.url = null;
-			this.futureUrl = executor.submit(() -> this.display.getSource().getUri());
-			this.sourceDirty = false;
-		}
+        if (this.sourceDirty) {
+            this.url = null;
+            this.futureUrl = executor.submit(() -> this.display.getSource().getUri());
+            this.sourceDirty = false;
+        }
 
-		if (this.futureUrl != null && this.futureUrl.isDone()) {
-			try {
-				URI uri = this.futureUrl.get();
-				if (uri == null) {
-					WebStreamerMod.LOGGER.info(this.display.makeLog("No URI found for the display."));
-				} else {
-					this.url = WebStreamerClientMod.DISPLAY_URLS.allocUri(uri);
-				}
-			} catch (InterruptedException | CancellationException e) {
-				// Cancel should not happen.
-			} catch (ExecutionException e) {
-				WebStreamerMod.LOGGER.warn(this.display.makeLog("Unhandled error while getting source uri."), e);
-			} finally {
-				this.futureUrl = null;
-			}
-		}
+        if (this.futureUrl != null && this.futureUrl.isDone()) {
+            try {
+                URI uri = this.futureUrl.get();
+                if (uri == null) {
+                    WebStreamerMod.LOGGER.info(this.display.makeLog("No URI found for the display."));
+                } else {
+                    this.url = WebStreamerClientMod.DISPLAY_URLS.allocUri(uri);
+                }
+            } catch (InterruptedException | CancellationException e) {
+                // Cancel should not happen.
+            } catch (ExecutionException e) {
+                WebStreamerMod.LOGGER.warn(this.display.makeLog("Unhandled error while getting source uri."), e);
+            } finally {
+                this.futureUrl = null;
+            }
+        }
 
-		return this.url;
+        return this.url;
 
-	}
+    }
 
-	public float getWidthOffset() {
-		float width = this.display.getWidth();
-		if (width != this.lastWidth) {
-			this.lastWidth = width;
-			this.widthOffset = this.display.calcWidthOffset();
-		}
-		return widthOffset;
-	}
+    public float getWidthOffset() {
+        float width = this.display.getWidth();
+        if (width != this.lastWidth) {
+            this.lastWidth = width;
+            this.widthOffset = this.display.calcWidthOffset();
+        }
+        return widthOffset;
+    }
 
-	public float getHeightOffset() {
-		float height = this.display.getHeight();
-		if (height != this.lastHeight) {
-			this.lastHeight = height;
-			this.heightOffset = this.display.calcHeightOffset();
-		}
-		return heightOffset;
-	}
+    public float getHeightOffset() {
+        float height = this.display.getHeight();
+        if (height != this.lastHeight) {
+            this.lastHeight = height;
+            this.heightOffset = this.display.calcHeightOffset();
+        }
+        return heightOffset;
+    }
 
 }

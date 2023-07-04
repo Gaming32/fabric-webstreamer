@@ -1,6 +1,6 @@
 package fr.theorozier.webstreamer.display.source;
 
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
@@ -8,17 +8,17 @@ import java.net.URI;
 public interface DisplaySource {
 
     String getType();
-    
+
     URI getUri();
-    
+
     void resetUri();
-    
+
     String getStatus();
-    
-    void writeNbt(NbtCompound nbt);
-    
-    void readNbt(NbtCompound nbt);
-    
+
+    void writeNbt(CompoundTag nbt);
+
+    void readNbt(CompoundTag nbt);
+
     @NotNull
     static DisplaySource newSourceFromType(String type) {
         return switch (type) {
@@ -27,5 +27,5 @@ public interface DisplaySource {
             default -> NullDisplaySource.INSTANCE;
         };
     }
-    
+
 }

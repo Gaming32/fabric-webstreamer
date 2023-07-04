@@ -5,22 +5,22 @@ import fr.theorozier.webstreamer.display.DisplayBlockInteract;
 import fr.theorozier.webstreamer.display.screen.DisplayBlockScreen;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Environment(EnvType.CLIENT)
-@Mixin(ClientPlayerEntity.class)
-public class ClientPlayerEntityMixin implements DisplayBlockInteract {
+@Mixin(LocalPlayer.class)
+public class LocalPlayerMixin implements DisplayBlockInteract {
 
     @SuppressWarnings("all")
-    private ClientPlayerEntity getThis() {
-        return (ClientPlayerEntity) (Object) this;
+    private LocalPlayer getThis() {
+        return (LocalPlayer) (Object) this;
     }
 
     @Override
     public void openDisplayBlockScreen(DisplayBlockEntity blockEntity) {
-        MinecraftClient.getInstance().setScreen(new DisplayBlockScreen(blockEntity));
+        Minecraft.getInstance().setScreen(new DisplayBlockScreen(blockEntity));
     }
 
 }

@@ -7,10 +7,10 @@ import fr.theorozier.webstreamer.display.DisplayNetworking;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
-import net.minecraft.block.Block;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.core.Registry;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +26,7 @@ public class WebStreamerMod implements ModInitializer {
     public void onInitialize() {
 
         DISPLAY_BLOCK = new DisplayBlock();
-        DISPLAY_ITEM = new DisplayBlockItem(DISPLAY_BLOCK, new FabricItemSettings().group(ItemGroup.REDSTONE));
+        DISPLAY_ITEM = new DisplayBlockItem(DISPLAY_BLOCK, new FabricItemSettings().tab(CreativeModeTab.TAB_REDSTONE));
         
         Registry.register(Registry.BLOCK, "webstreamer:display", DISPLAY_BLOCK);
         Registry.register(Registry.ITEM, "webstreamer:display", DISPLAY_ITEM);

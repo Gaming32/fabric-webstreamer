@@ -1,23 +1,23 @@
 package fr.theorozier.webstreamer.display;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 public class DisplayBlockItem extends BlockItem {
 
-	public DisplayBlockItem(Block block, Settings settings) {
-		super(block, settings);
-	}
+    public DisplayBlockItem(Block block, Properties settings) {
+        super(block, settings);
+    }
 
-	@Nullable
-	@Override
-	protected BlockState getPlacementState(ItemPlacementContext context) {
-		PlayerEntity playerEntity = context.getPlayer();
-		return playerEntity != null && !DisplayBlock.canUse(playerEntity) ? null : super.getPlacementState(context);
-	}
+    @Nullable
+    @Override
+    protected BlockState getPlacementState(BlockPlaceContext context) {
+        Player playerEntity = context.getPlayer();
+        return playerEntity != null && !DisplayBlock.canUse(playerEntity) ? null : super.getPlacementState(context);
+    }
 
 }

@@ -1,5 +1,6 @@
 package fr.theorozier.webstreamer.display.screen;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import fr.theorozier.webstreamer.WebStreamerClientMod;
 import fr.theorozier.webstreamer.display.DisplayBlockEntity;
 import fr.theorozier.webstreamer.display.DisplayNetworking;
@@ -12,42 +13,40 @@ import fr.theorozier.webstreamer.twitch.TwitchClient;
 import fr.theorozier.webstreamer.util.AsyncProcessor;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.Drawable;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.CyclingButtonWidget;
-import net.minecraft.client.gui.widget.SliderWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.util.NarratorManager;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.Text;
+import net.minecraft.client.GameNarrator;
+import net.minecraft.client.gui.components.*;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
+
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 @Environment(EnvType.CLIENT)
 public class DisplayBlockScreen extends Screen {
 
-    private static final Text CONF_TEXT = Text.translatable("gui.webstreamer.display.conf");
-    private static final Text WIDTH_TEXT = Text.translatable("gui.webstreamer.display.width");
-    private static final Text HEIGHT_TEXT = Text.translatable("gui.webstreamer.display.height");
-    private static final Text SOURCE_TYPE_TEXT = Text.translatable("gui.webstreamer.display.sourceType");
-    private static final Text SOURCE_TYPE_RAW_TEXT = Text.translatable("gui.webstreamer.display.sourceType.raw");
-    private static final Text SOURCE_TYPE_TWITCH_TEXT = Text.translatable("gui.webstreamer.display.sourceType.twitch");
-    private static final Text URL_TEXT = Text.translatable("gui.webstreamer.display.url");
-    private static final Text CHANNEL_TEXT = Text.translatable("gui.webstreamer.display.channel");
-    private static final Text MALFORMED_URL_TEXT = Text.translatable("gui.webstreamer.display.malformedUrl");
-    private static final Text NO_QUALITY_TEXT = Text.translatable("gui.webstreamer.display.noQuality");
-    private static final Text QUALITY_TEXT = Text.translatable("gui.webstreamer.display.quality");
+    private static final Component CONF_TEXT = Component.translatable("gui.webstreamer.display.conf");
+    private static final Component WIDTH_TEXT = Component.translatable("gui.webstreamer.display.width");
+    private static final Component HEIGHT_TEXT = Component.translatable("gui.webstreamer.display.height");
+    private static final Component SOURCE_TYPE_TEXT = Component.translatable("gui.webstreamer.display.sourceType");
+    private static final Component SOURCE_TYPE_RAW_TEXT = Component.translatable("gui.webstreamer.display.sourceType.raw");
+    private static final Component SOURCE_TYPE_TWITCH_TEXT = Component.translatable("gui.webstreamer.display.sourceType.twitch");
+    private static final Component URL_TEXT = Component.translatable("gui.webstreamer.display.url");
+    private static final Component CHANNEL_TEXT = Component.translatable("gui.webstreamer.display.channel");
+    private static final Component MALFORMED_URL_TEXT = Component.translatable("gui.webstreamer.display.malformedUrl");
+    private static final Component NO_QUALITY_TEXT = Component.translatable("gui.webstreamer.display.noQuality");
+    private static final Component QUALITY_TEXT = Component.translatable("gui.webstreamer.display.quality");
     private static final String AUDIO_DISTANCE_TEXT_KEY = "gui.webstreamer.display.audioDistance";
     private static final String AUDIO_VOLUME_TEXT_KEY = "gui.webstreamer.display.audioVolume";
 
-    private static final Text ERR_NO_TOKEN_TEXT = Text.translatable("gui.webstreamer.display.error.noToken");
-    private static final Text ERR_CHANNEL_NOT_FOUND_TEXT = Text.translatable("gui.webstreamer.display.error.channelNotFound");
-    private static final Text ERR_CHANNEL_OFFLINE_TEXT = Text.translatable("gui.webstreamer.display.error.channelOffline");
+    private static final Component ERR_NO_TOKEN_TEXT = Component.translatable("gui.webstreamer.display.error.noToken");
+    private static final Component ERR_CHANNEL_NOT_FOUND_TEXT = Component.translatable("gui.webstreamer.display.error.channelNotFound");
+    private static final Component ERR_CHANNEL_OFFLINE_TEXT = Component.translatable("gui.webstreamer.display.error.channelOffline");
     private static final String ERR_UNKNOWN_TEXT_KEY = "gui.webstreamer.display.error.unknown";
 
     private final DisplayBlockEntity blockEntity;
@@ -60,13 +59,9 @@ public class DisplayBlockScreen extends Screen {
     private int yTop;
     private int ySourceTop;
 
-    private TextFieldWidget displayWidthField;
-    private TextFieldWidget displayHeightField;
-    private CyclingButtonWidget<SourceType> sourceTypeButton;
-    private AudioDistanceSliderWidget audioDistanceSlider;
-    private AudioVolumeSliderWidget audioVolumeSlider;
-    private ButtonWidget doneButton;
-    private ButtonWidget cancelButton;
+    private EditBox displayWidthField;
+    private EditBox displayHeightField;
+    private Button doneButton;
 
     private float displayWidth;
     private float displayHeight;
@@ -75,7 +70,7 @@ public class DisplayBlockScreen extends Screen {
 
     public DisplayBlockScreen(DisplayBlockEntity blockEntity) {
 
-        super(NarratorManager.EMPTY);
+        super(GameNarrator.NO_TITLE);
         this.blockEntity = blockEntity;
 
         DisplaySource source = blockEntity.getSource();
@@ -99,8 +94,8 @@ public class DisplayBlockScreen extends Screen {
 
     private void setSourceScreen(SourceScreen<?> sourceScreen) {
         this.sourceScreen = sourceScreen;
-        if (this.client != null) {
-            this.init(this.client, this.width, this.height);
+        if (this.minecraft != null) {
+            this.init(this.minecraft, this.width, this.height);
         }
     }
 
@@ -111,45 +106,47 @@ public class DisplayBlockScreen extends Screen {
         this.yTop = 60;
         this.ySourceTop = 130;
 
-        String displayWidthRaw = this.displayWidthField == null ? Float.toString(this.displayWidth) : this.displayWidthField.getText();
-        String displayHeightRaw = this.displayHeightField == null ? Float.toString(this.displayHeight) : this.displayHeightField.getText();
+        String displayWidthRaw = this.displayWidthField == null ? Float.toString(this.displayWidth) : this.displayWidthField.getValue();
+        String displayHeightRaw = this.displayHeightField == null ? Float.toString(this.displayHeight) : this.displayHeightField.getValue();
 
-        this.displayWidthField = new TextFieldWidget(this.textRenderer, xHalf - 154, yTop + 11, 50, 18, Text.empty());
-        this.displayWidthField.setText(displayWidthRaw);
-        this.displayWidthField.setChangedListener(this::onDisplayWidthChanged);
-        this.addDrawableChild(this.displayWidthField);
-        this.addSelectableChild(this.displayWidthField);
+        this.displayWidthField = new EditBox(this.font, xHalf - 154, yTop + 11, 50, 18, Component.empty());
+        this.displayWidthField.setValue(displayWidthRaw);
+        this.displayWidthField.setResponder(this::onDisplayWidthChanged);
+        this.addRenderableWidget(this.displayWidthField);
+        this.addWidget(this.displayWidthField);
 
-        this.displayHeightField = new TextFieldWidget(this.textRenderer, xHalf - 96, yTop + 11, 50, 18, Text.empty());
-        this.displayHeightField.setText(displayHeightRaw);
-        this.displayHeightField.setChangedListener(this::onDisplayHeightChanged);
-        this.addDrawableChild(this.displayHeightField);
-        this.addSelectableChild(this.displayHeightField);
+        this.displayHeightField = new EditBox(this.font, xHalf - 96, yTop + 11, 50, 18, Component.empty());
+        this.displayHeightField.setValue(displayHeightRaw);
+        this.displayHeightField.setResponder(this::onDisplayHeightChanged);
+        this.addRenderableWidget(this.displayHeightField);
+        this.addWidget(this.displayHeightField);
 
-        this.sourceTypeButton = CyclingButtonWidget.builder(SourceType::getText)
-                .values(SourceType.values())
-                .build(xHalf - 38, yTop + 10, 192, 20, SOURCE_TYPE_TEXT, this::onSourceTypeChanged);
+        CycleButton<SourceType> sourceTypeButton = CycleButton.builder(SourceType::getText)
+            .withValues(SourceType.values())
+            .create(xHalf - 38, yTop + 10, 192, 20, SOURCE_TYPE_TEXT, this::onSourceTypeChanged);
 
-        this.sourceTypeButton.setValue(this.sourceType);
-        this.addDrawableChild(this.sourceTypeButton);
+        sourceTypeButton.setValue(this.sourceType);
+        this.addRenderableWidget(sourceTypeButton);
 
-        this.audioDistanceSlider = new AudioDistanceSliderWidget(xHalf - 154, yTop + 36, 150, 20, this.displayAudioDistance, 64);
-        this.audioDistanceSlider.setChangedListener(dist -> this.displayAudioDistance = dist);
-        this.addDrawableChild(this.audioDistanceSlider);
+        AudioDistanceSliderWidget audioDistanceSlider = new AudioDistanceSliderWidget(xHalf - 154, yTop + 36, 150, 20, this.displayAudioDistance, 64);
+        audioDistanceSlider.setChangedListener(dist -> this.displayAudioDistance = dist);
+        this.addRenderableWidget(audioDistanceSlider);
 
-        this.audioVolumeSlider = new AudioVolumeSliderWidget(xHalf + 4, yTop + 36, 150, 20, this.displayAudioVolume);
-        this.audioVolumeSlider.setChangedListener(volume -> this.displayAudioVolume = volume);
-        this.addDrawableChild(this.audioVolumeSlider);
-        
-        this.doneButton = new ButtonWidget(xHalf - 4 - 150, height / 4 + 120 + 12, 150, 20, ScreenTexts.DONE, button -> {
-            this.commitAndClose();
-        });
-        this.addDrawableChild(this.doneButton);
+        AudioVolumeSliderWidget audioVolumeSlider = new AudioVolumeSliderWidget(xHalf + 4, yTop + 36, 150, 20, this.displayAudioVolume);
+        audioVolumeSlider.setChangedListener(volume -> this.displayAudioVolume = volume);
+        this.addRenderableWidget(audioVolumeSlider);
 
-        this.cancelButton = new ButtonWidget(xHalf + 4, height / 4 + 120 + 12, 150, 20, ScreenTexts.CANCEL, button -> {
-            this.close();
-        });
-        this.addDrawableChild(this.cancelButton);
+        this.doneButton = new Button(
+            xHalf - 4 - 150, height / 4 + 120 + 12, 150, 20, CommonComponents.GUI_DONE,
+            button -> this.commitAndClose()
+        );
+        this.addRenderableWidget(this.doneButton);
+
+        Button cancelButton = new Button(
+            xHalf + 4, height / 4 + 120 + 12, 150, 20, CommonComponents.GUI_CANCEL,
+            button -> this.onClose()
+        );
+        this.addRenderableWidget(cancelButton);
 
         if (this.sourceScreen != null) {
             this.sourceScreen.init();
@@ -173,7 +170,7 @@ public class DisplayBlockScreen extends Screen {
         }
     }
 
-    private void onSourceTypeChanged(CyclingButtonWidget<SourceType> button, SourceType type) {
+    private void onSourceTypeChanged(CycleButton<SourceType> button, SourceType type) {
         if (type != this.sourceType) {
             this.sourceType = type;
             this.setSourceScreen(switch (type) {
@@ -192,15 +189,15 @@ public class DisplayBlockScreen extends Screen {
             }
             DisplayNetworking.sendDisplayUpdate(this.blockEntity);
         }
-        this.close();
+        this.onClose();
     }
 
     @Override
-    public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
+    public void render(@NotNull PoseStack matrices, int mouseX, int mouseY, float delta) {
         this.renderBackground(matrices);
-        drawCenteredText(matrices, this.textRenderer, CONF_TEXT, xHalf, 20, 0xFFFFFF);
-        drawTextWithShadow(matrices, this.textRenderer, WIDTH_TEXT, xHalf - 154, yTop + 1, 0xA0A0A0);
-        drawTextWithShadow(matrices, this.textRenderer, HEIGHT_TEXT, xHalf - 96, yTop + 1, 0xA0A0A0);
+        drawCenteredString(matrices, this.font, CONF_TEXT, xHalf, 20, 0xFFFFFF);
+        drawString(matrices, this.font, WIDTH_TEXT, xHalf - 154, yTop + 1, 0xA0A0A0);
+        drawString(matrices, this.font, HEIGHT_TEXT, xHalf - 96, yTop + 1, 0xA0A0A0);
         if (this.sourceScreen != null) {
             this.sourceScreen.render(matrices, mouseX, mouseY, delta);
         }
@@ -226,12 +223,12 @@ public class DisplayBlockScreen extends Screen {
         RAW(SOURCE_TYPE_RAW_TEXT),
         TWITCH(SOURCE_TYPE_TWITCH_TEXT);
 
-        private final Text text;
-        SourceType(Text text) {
+        private final Component text;
+        SourceType(Component text) {
             this.text = text;
         }
 
-        public Text getText() {
+        public Component getText() {
             return text;
         }
 
@@ -240,7 +237,7 @@ public class DisplayBlockScreen extends Screen {
     /**
      * A basic source screen.
      */
-    private abstract static class SourceScreen<S extends DisplaySource> implements Drawable {
+    private abstract static class SourceScreen<S extends DisplaySource> implements Widget {
 
         protected final S source;
 
@@ -259,7 +256,7 @@ public class DisplayBlockScreen extends Screen {
      */
     private class RawSourceScreen extends SourceScreen<RawDisplaySource> {
 
-        private TextFieldWidget urlField;
+        private EditBox urlField;
 
         private final AsyncProcessor<String, URI, IllegalArgumentException> asyncUrl = new AsyncProcessor<>(URI::create);
 
@@ -281,24 +278,24 @@ public class DisplayBlockScreen extends Screen {
 
             boolean first = (this.urlField == null);
 
-            this.urlField = new TextFieldWidget(textRenderer, xHalf - 154, ySourceTop + 10, 308, 20, this.urlField, Text.empty());
+            this.urlField = new EditBox(font, xHalf - 154, ySourceTop + 10, 308, 20, this.urlField, Component.empty());
             this.urlField.setMaxLength(32000);
-            this.urlField.setChangedListener(this::onUrlChanged);
-            addSelectableChild(this.urlField);
+            this.urlField.setResponder(this::onUrlChanged);
+            addWidget(this.urlField);
             setInitialFocus(this.urlField);
-            addDrawableChild(this.urlField);
+            addRenderableWidget(this.urlField);
 
             if (first) {
-                this.urlField.setText(Objects.toString(this.source.getUri(), ""));
+                this.urlField.setValue(Objects.toString(this.source.getUri(), ""));
             }
 
         }
 
         @Override
-        public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
-            drawTextWithShadow(matrices, textRenderer, URL_TEXT, xHalf - 154, ySourceTop, 0xA0A0A0);
+        public void render(@NotNull PoseStack matrices, int mouseX, int mouseY, float delta) {
+            drawString(matrices, font, URL_TEXT, xHalf - 154, ySourceTop, 0xA0A0A0);
             if (this.source.getUri() == null) {
-                drawCenteredText(matrices, textRenderer, MALFORMED_URL_TEXT, xHalf, ySourceTop + 50, 0xFF6052);
+                drawCenteredString(matrices, font, MALFORMED_URL_TEXT, xHalf, ySourceTop + 50, 0xFF6052);
             }
         }
 
@@ -316,14 +313,14 @@ public class DisplayBlockScreen extends Screen {
 
     private class TwitchSourceScreen extends SourceScreen<TwitchDisplaySource> {
 
-        private TextFieldWidget channelField;
+        private EditBox channelField;
         private QualitySliderWidget qualitySlider;
-        
+
         private String firstQuality;
 
         private final AsyncProcessor<String, Playlist, TwitchClient.PlaylistException> asyncPlaylist;
         private Playlist playlist;
-        private Text playlistError;
+        private Component playlistError;
 
         TwitchSourceScreen(TwitchDisplaySource source) {
             super(source);
@@ -345,32 +342,32 @@ public class DisplayBlockScreen extends Screen {
 
             boolean first = (this.channelField == null);
 
-            this.channelField = new TextFieldWidget(textRenderer, xHalf - 154, ySourceTop + 10, 308, 20, this.channelField, Text.empty());
+            this.channelField = new EditBox(font, xHalf - 154, ySourceTop + 10, 308, 20, this.channelField, Component.empty());
             this.channelField.setMaxLength(64);
-            this.channelField.setChangedListener(this::onChannelChanged);
-            addSelectableChild(this.channelField);
+            this.channelField.setResponder(this::onChannelChanged);
+            addWidget(this.channelField);
             setInitialFocus(this.channelField);
-            addDrawableChild(this.channelField);
-    
+            addRenderableWidget(this.channelField);
+
             this.qualitySlider = new QualitySliderWidget(xHalf - 154, ySourceTop + 50, 308, 20, this.qualitySlider);
             this.qualitySlider.setChangedListener(this::onQualityChanged);
             this.updateQualitySlider();
-            addSelectableChild(this.qualitySlider);
-            addDrawableChild(this.qualitySlider);
+            addWidget(this.qualitySlider);
+            addRenderableWidget(this.qualitySlider);
 
             if (first) {
-                this.channelField.setText(Objects.toString(this.source.getChannel(), ""));
+                this.channelField.setValue(Objects.toString(this.source.getChannel(), ""));
             }
 
         }
 
         @Override
-        public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
-            drawTextWithShadow(matrices, textRenderer, CHANNEL_TEXT, xHalf - 154, ySourceTop, 0xA0A0A0);
+        public void render(@NotNull PoseStack matrices, int mouseX, int mouseY, float delta) {
+            drawString(matrices, font, CHANNEL_TEXT, xHalf - 154, ySourceTop, 0xA0A0A0);
             if (this.playlistError == null) {
-                drawTextWithShadow(matrices, textRenderer, QUALITY_TEXT, xHalf - 154, ySourceTop + 40, 0xA0A0A0);
+                drawString(matrices, font, QUALITY_TEXT, xHalf - 154, ySourceTop + 40, 0xA0A0A0);
             } else {
-                drawCenteredText(matrices, textRenderer, this.playlistError, xHalf, ySourceTop + 50, 0xFF6052);
+                drawCenteredString(matrices, font, this.playlistError, xHalf, ySourceTop + 50, 0xFF6052);
             }
         }
 
@@ -392,7 +389,7 @@ public class DisplayBlockScreen extends Screen {
                 this.playlist = null;
                 this.qualitySlider.setQualities(null);
                 this.playlistError = switch (exc.getExceptionType()) {
-                    case UNKNOWN -> Text.translatable(ERR_UNKNOWN_TEXT_KEY, "");
+                    case UNKNOWN -> Component.translatable(ERR_UNKNOWN_TEXT_KEY, "");
                     case NO_TOKEN -> ERR_NO_TOKEN_TEXT;
                     case CHANNEL_NOT_FOUND -> ERR_CHANNEL_NOT_FOUND_TEXT;
                     case CHANNEL_OFFLINE -> ERR_CHANNEL_OFFLINE_TEXT;
@@ -419,15 +416,15 @@ public class DisplayBlockScreen extends Screen {
         }
 
     }
-    
-    private static class QualitySliderWidget extends SliderWidget {
+
+    private static class QualitySliderWidget extends AbstractSliderButton {
 
         private int qualityIndex = -1;
         private List<PlaylistQuality> qualities;
         private Consumer<PlaylistQuality> changedListener;
 
         public QualitySliderWidget(int x, int y, int width, int height, QualitySliderWidget previousSlider) {
-            super(x, y, width, height, Text.empty(), 0.0);
+            super(x, y, width, height, Component.empty(), 0.0);
             if (previousSlider != null && previousSlider.qualities != null) {
                 this.setQualities(previousSlider.qualities);
                 this.qualityIndex = previousSlider.qualityIndex;
@@ -437,13 +434,13 @@ public class DisplayBlockScreen extends Screen {
                 this.setQualities(null);
             }
         }
-    
+
         public void setQualities(List<PlaylistQuality> qualities) {
             this.qualities = qualities;
             this.applyValue();
             this.updateMessage();
         }
-        
+
         public void setQuality(String quality) {
             for (int i = 0; i < this.qualities.size(); i++) {
                 if (this.qualities.get(i).name().equals(quality)) {
@@ -467,7 +464,7 @@ public class DisplayBlockScreen extends Screen {
             if (this.qualityIndex < 0) {
                 this.setMessage(NO_QUALITY_TEXT);
             } else {
-                this.setMessage(Text.literal(this.qualities.get(this.qualityIndex).name()));
+                this.setMessage(Component.literal(this.qualities.get(this.qualityIndex).name()));
             }
         }
 
@@ -491,62 +488,62 @@ public class DisplayBlockScreen extends Screen {
         }
 
     }
-    
-    private static class AudioDistanceSliderWidget extends SliderWidget {
-        
+
+    private static class AudioDistanceSliderWidget extends AbstractSliderButton {
+
         private final float maxDistance;
         private Consumer<Float> changedListener;
-        
+
         public AudioDistanceSliderWidget(int x, int y, int width, int height, float distance, float maxDistance) {
-            super(x, y, width, height, Text.empty(), distance / maxDistance);
+            super(x, y, width, height, Component.empty(), distance / maxDistance);
             this.maxDistance = maxDistance;
             this.updateMessage();
         }
-        
+
         public void setChangedListener(Consumer<Float> changedListener) {
             this.changedListener = changedListener;
         }
-        
+
         private float getDistance() {
             return (float) (this.value * this.maxDistance);
         }
-        
+
         @Override
         protected void updateMessage() {
-            this.setMessage(Text.translatable(AUDIO_DISTANCE_TEXT_KEY).append(": ").append(Integer.toString((int) this.getDistance())));
+            this.setMessage(Component.translatable(AUDIO_DISTANCE_TEXT_KEY).append(": ").append(Integer.toString((int) this.getDistance())));
         }
-        
+
         @Override
         protected void applyValue() {
             this.changedListener.accept(this.getDistance());
         }
-        
+
     }
-    
-    private static class AudioVolumeSliderWidget extends SliderWidget {
-        
+
+    private static class AudioVolumeSliderWidget extends AbstractSliderButton {
+
         private Consumer<Float> changedListener;
-    
+
         public AudioVolumeSliderWidget(int x, int y, int width, int height, float value) {
-            super(x, y, width, height, Text.empty(), value);
+            super(x, y, width, height, Component.empty(), value);
             this.updateMessage();
         }
-    
+
         public void setChangedListener(Consumer<Float> changedListener) {
             this.changedListener = changedListener;
         }
-    
+
         @Override
         protected void updateMessage() {
-            Text text = (this.value == this.getYImage(false)) ? ScreenTexts.OFF : Text.literal((int)(this.value * 100.0) + "%");
-            this.setMessage(Text.translatable(AUDIO_VOLUME_TEXT_KEY).append(": ").append(text));
+            Component text = (this.value == this.getYImage(false)) ? CommonComponents.OPTION_OFF : Component.literal((int)(this.value * 100.0) + "%");
+            this.setMessage(Component.translatable(AUDIO_VOLUME_TEXT_KEY).append(": ").append(text));
         }
-    
+
         @Override
         protected void applyValue() {
             this.changedListener.accept((float) this.value);
         }
-        
+
     }
 
 }
