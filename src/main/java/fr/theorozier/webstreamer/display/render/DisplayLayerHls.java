@@ -174,7 +174,7 @@ public class DisplayLayerHls extends DisplayLayer {
     /** Internal blocking method to request the playlist. */
     private MediaPlaylist requestPlaylistBlocking(URI uri) throws IOException {
         try {
-            HttpRequest request = HttpRequest.newBuilder(uri).GET().timeout(Duration.ofSeconds(5)).build();
+            HttpRequest request = HttpRequest.newBuilder(uri).GET().timeout(Duration.ofSeconds(10)).build();
             HttpResponse<Stream<String>> res = this.res.getHttpClient()
                     .send(request, HttpResponse.BodyHandlers.ofLines());
             if (res.statusCode() == 200) {
