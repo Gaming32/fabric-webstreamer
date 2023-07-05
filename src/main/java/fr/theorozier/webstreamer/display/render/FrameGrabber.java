@@ -2,14 +2,13 @@ package fr.theorozier.webstreamer.display.render;
 
 import fr.theorozier.webstreamer.WebStreamerMod;
 import fr.theorozier.webstreamer.display.audio.AudioStreamingBuffer;
+import fr.theorozier.webstreamer.util.NamedInputStream;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.bytedeco.javacv.Frame;
 
-import java.io.ByteArrayInputStream;
-import java.io.FilterInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -36,6 +35,7 @@ public class FrameGrabber {
     private final DisplayLayerResources pools;
     private final URI uri;
     private final String name;
+    private final byte[] initBytes;
 
     private ByteBuffer buffer;
     private FFmpegFrameGrabber grabber;
@@ -47,10 +47,11 @@ public class FrameGrabber {
 
     private ArrayDeque<AudioStreamingBuffer> startAudioBuffers;
 
-    public FrameGrabber(DisplayLayerResources pools, URI uri, String name) {
+    public FrameGrabber(DisplayLayerResources pools, URI uri, String name, byte[] initBytes) {
         this.pools = pools;
         this.uri = uri;
         this.name = name;
+        this.initBytes = initBytes;
     }
 
     public void start() throws IOException {
@@ -65,14 +66,16 @@ public class FrameGrabber {
             this.buffer = this.pools.allocRawFileBuffer();
             this.pools.getHttpClient().send(req, info -> new BufferResponseSubscriber(this.buffer));
 
-            this.grabber = new FFmpegFrameGrabber(new FilterInputStream(
-                new ByteArrayInputStream(this.buffer.array(), this.buffer.position(), this.buffer.remaining())
-            ) {
-                @Override
-                public String toString() {
-                    return name;
-                }
-            });
+            InputStream inputStream = new ByteArrayInputStream(this.buffer.array(), this.buffer.position(), this.buffer.remaining());
+            if (initBytes != null) {
+                inputStream = new SequenceInputStream(new ByteArrayInputStream(initBytes), inputStream);
+            }
+            if (!inputStream.markSupported()) {
+                inputStream = new BufferedInputStream(inputStream);
+            }
+            inputStream = new NamedInputStream(inputStream, name);
+
+            this.grabber = new FFmpegFrameGrabber(inputStream);
             this.grabber.startUnsafe();
 
             this.tempAudioBuffer = this.pools.allocAudioBuffer();

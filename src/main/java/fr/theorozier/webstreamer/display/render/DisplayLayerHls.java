@@ -5,6 +5,7 @@ import fr.theorozier.webstreamer.display.audio.AudioStreamingSource;
 import fr.theorozier.webstreamer.display.url.DisplayUrl;
 import fr.theorozier.webstreamer.util.AsyncMap;
 import fr.theorozier.webstreamer.util.AsyncProcessor;
+import io.lindstrom.m3u8.model.ByteRange;
 import io.lindstrom.m3u8.model.MediaPlaylist;
 import io.lindstrom.m3u8.model.MediaSegment;
 import io.lindstrom.m3u8.parser.MediaPlaylistParser;
@@ -17,10 +18,12 @@ import net.minecraft.util.profiling.ProfileCollector;
 import org.bytedeco.javacv.Frame;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -63,6 +66,8 @@ public class DisplayLayerHls extends DisplayLayer {
     private long playlistRequestInterval;
     /** Current number of consecutive failed request for the playerlist. Used to  */
     private int playlistConsecutiveFailedRequest = 0;
+    private URI initUri;
+    private byte[] initBytes;
 
     // Segment //
 
@@ -178,12 +183,54 @@ public class DisplayLayerHls extends DisplayLayer {
             HttpResponse<Stream<String>> res = this.res.getHttpClient()
                     .send(request, HttpResponse.BodyHandlers.ofLines());
             if (res.statusCode() == 200) {
-                return this.hlsParser.readPlaylist(res.body().iterator());
+                final MediaPlaylist result = this.hlsParser.readPlaylist(res.body().iterator());
+                result.mediaSegments()
+                    .stream()
+                    .findFirst()
+                    .flatMap(MediaSegment::segmentMap)
+                    .ifPresentOrElse(
+                        map -> {
+                            final URI newInitUri = url.getContextUri(map.uri());
+                            if (newInitUri.equals(initUri)) return;
+                            initUri = newInitUri;
+                            final HttpResponse<byte[]> response;
+                            try {
+                                response = this.res.getHttpClient().send(
+                                    HttpRequest.newBuilder(newInitUri).GET().timeout(Duration.ofSeconds(1)).build(),
+                                    HttpResponse.BodyHandlers.ofByteArray()
+                                );
+                                if (response.statusCode() != 200) {
+                                    throw new IOException("Failed to request init stream, status code: " + res.statusCode());
+                                }
+                            } catch (IOException e) {
+                                throw new UncheckedIOException(e);
+                            } catch (InterruptedException e) {
+                                throw new UncheckedIOException(new IOException(e));
+                            }
+                            byte[] bytes = response.body();
+                            if (map.byteRange().isPresent()) {
+                                final ByteRange range = map.byteRange().get();
+                                if (range.offset().isPresent()) {
+                                    bytes = Arrays.copyOfRange(bytes, (int)(long)range.offset().get(), (int)range.length());
+                                } else {
+                                    bytes = Arrays.copyOf(bytes, (int)range.length());
+                                }
+                            }
+                            initBytes = bytes;
+                        },
+                        () -> {
+                            initUri = null;
+                            initBytes = null;
+                        }
+                    );
+                return result;
             } else {
                 throw new IOException("HTTP request failed, status code: " + res.statusCode());
             }
         } catch (InterruptedException e) {
             throw new IOException(e);
+        } catch (UncheckedIOException uioe) {
+            throw uioe.getCause();
         }
     }
 
@@ -233,7 +280,7 @@ public class DisplayLayerHls extends DisplayLayer {
     // Grabber //
 
     private FrameGrabber requestGrabberBlocking(String uri) throws IOException {
-        FrameGrabber grabber = new FrameGrabber(this.res, this.url.getContextUri(uri), uri);
+        FrameGrabber grabber = new FrameGrabber(this.res, this.url.getContextUri(uri), uri, initBytes);
         grabber.start();
         return grabber;
     }

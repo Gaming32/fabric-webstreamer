@@ -75,7 +75,7 @@ public class DisplayLayerImage extends DisplayLayer {
 
     private STBLoadedImage requestImageBlocking() throws IOException {
         try {
-            HttpRequest request = HttpRequest.newBuilder(this.url.uri()).GET().timeout(Duration.ofSeconds(5)).build();
+            HttpRequest request = HttpRequest.newBuilder(this.url.uri()).GET().timeout(Duration.ofSeconds(10)).build();
             HttpResponse<InputStream> res = this.res.getHttpClient().send(request, HttpResponse.BodyHandlers.ofInputStream());
             if (res.statusCode() == 200) {
                 InputStream stream = res.body();
