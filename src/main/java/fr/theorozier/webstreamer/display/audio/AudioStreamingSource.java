@@ -131,7 +131,10 @@ public class AudioStreamingSource {
         this.checkValid();
 
         if (buffer.timestamp <= this.lastBufferTimestamp) {
-            WebStreamerMod.LOGGER.error("given {} us, expected more than {} us", buffer.timestamp, this.lastBufferTimestamp);
+            WebStreamerMod.LOGGER.debug(
+                "given {} us, expected more than {} us. This usually occurs on stream restart.",
+                buffer.timestamp, this.lastBufferTimestamp
+            );
             return;
         }
 
