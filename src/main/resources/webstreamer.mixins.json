@@ -7,9 +7,9 @@
   ],
   "client": [
     "LevelRendererInvoker",
-    "LevelRendererMixin",
-    "LoaderMixin",
-    "LocalPlayerMixin"
+    "MixinLevelRenderer",
+    "MixinLoader",
+    "MixinLocalPlayer"
   ],
   "injectors": {
     "defaultRequire": 1

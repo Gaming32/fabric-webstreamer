@@ -21,7 +21,7 @@ import java.util.Enumeration;
 
 @Environment(EnvType.CLIENT)
 @Mixin(value = Loader.class, remap = false)
-public class LoaderMixin {
+public class MixinLoader {
     @Unique
     private static boolean webstreamer$deleteHack;
 

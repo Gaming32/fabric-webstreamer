@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Environment(EnvType.CLIENT)
 @Mixin(LevelRenderer.class)
-public class LevelRendererMixin {
+public class MixinLevelRenderer {
 
     @Inject(method = "renderLevel", at = @At("HEAD"))
     public void render(CallbackInfo info) {

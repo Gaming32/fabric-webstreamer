@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.Mixin;
 
 @Environment(EnvType.CLIENT)
 @Mixin(LocalPlayer.class)
-public class LocalPlayerMixin implements DisplayBlockInteract {
+public class MixinLocalPlayer implements DisplayBlockInteract {
 
     @SuppressWarnings("all")
     private LocalPlayer getThis() {
