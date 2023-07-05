@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Environment(EnvType.CLIENT)
 public class DisplayLayerResources {
-    
+
     /** 8 Mio buffer for pre-storing whole TransportStream file. */
     private static final int RAW_FILE_BUFFER_SIZE = 1 << 23;
     /** Limit to 256 Mio of raw file buffers. */
@@ -32,7 +32,7 @@ public class DisplayLayerResources {
     private static final int AUDIO_BUFFER_SIZE = 8192;
     /** Limit to 512 Kio of audio buffers. */
     private static final int AUDIO_BUFFER_LIMIT = 64;
-    
+
     private final ExecutorService executor = Executors.newFixedThreadPool(2, new ThreadFactory() {
         private final AtomicInteger counter = new AtomicInteger();
         @Override
@@ -40,22 +40,24 @@ public class DisplayLayerResources {
             return new Thread(r, "WebStreamer Display Queue (" + this.counter.getAndIncrement() + ")");
         }
     });
-    
-    private final HttpClient httpClient = HttpClient.newHttpClient();
+
+    private final HttpClient httpClient = HttpClient.newBuilder()
+        .followRedirects(HttpClient.Redirect.NORMAL)
+        .build();
     private final List<ByteBuffer> rawFileBuffers = new ArrayList<>();
     private final List<ShortBuffer> audioBuffers = new ArrayList<>();
-    
+
     private int rawFileBuffersCount = 0;
     private int audioBuffersCount = 0;
-    
+
     public ExecutorService getExecutor() {
         return this.executor;
     }
-    
+
     public HttpClient getHttpClient() {
         return this.httpClient;
     }
-    
+
     /**
      * Allocate an image buffer. Such buffers are backed by arrays to allow to
      * create a {@link java.io.ByteArrayInputStream} from it.
@@ -74,13 +76,13 @@ public class DisplayLayerResources {
             }
         }
     }
-    
+
     public void freeRawFileBuffer(ByteBuffer buffer) {
         synchronized (this.rawFileBuffers) {
             this.rawFileBuffers.add(buffer);
         }
     }
-    
+
     /**
      * Allocate a sound buffer. Such buffers are backed by a native memory in
      * order to be directly used as OpenAL buffer data.
@@ -99,11 +101,11 @@ public class DisplayLayerResources {
             }
         }
     }
-    
+
     public void freeAudioBuffer(ShortBuffer buffer) {
         synchronized (this.audioBuffers) {
             this.audioBuffers.add(buffer);
         }
     }
-    
+
 }
