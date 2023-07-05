@@ -78,7 +78,7 @@ public class DisplayLayerHls extends DisplayLayer {
     /** Frame grabber for the current segment. */
     private FrameGrabber grabber;
 
-    private final AsyncMap<URI, FrameGrabber, IOException> asyncGrabbers;
+    private final AsyncMap<String, FrameGrabber, IOException> asyncGrabbers;
 
     // Sound //
 
@@ -232,8 +232,8 @@ public class DisplayLayerHls extends DisplayLayer {
 
     // Grabber //
 
-    private FrameGrabber requestGrabberBlocking(URI uri) throws IOException {
-        FrameGrabber grabber = new FrameGrabber(this.res, uri);
+    private FrameGrabber requestGrabberBlocking(String uri) throws IOException {
+        FrameGrabber grabber = new FrameGrabber(this.res, this.url.getContextUri(uri), uri);
         grabber.start();
         return grabber;
     }
@@ -245,7 +245,7 @@ public class DisplayLayerHls extends DisplayLayer {
     private void requestGrabber(int index) {
         MediaSegment seg = this.getSegment(index);
         if (seg != null) {
-            this.asyncGrabbers.push(this.res.getExecutor(), this.url.getContextUri(seg.uri()), index);
+            this.asyncGrabbers.push(this.res.getExecutor(), seg.uri(), index);
         }
     }
 

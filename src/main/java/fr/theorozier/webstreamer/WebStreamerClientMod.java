@@ -62,7 +62,7 @@ public class WebStreamerClientMod implements ClientModInitializer {
         DISPLAY_LAYERS = new DisplayLayerManager();
         TWITCH_CLIENT = new TwitchClient();
 
-        FFmpegLogCallback.setLevel(avutil.AV_LOG_QUIET);
+        FFmpegLogCallback.setLevel(avutil.AV_LOG_ERROR);
 
     }
 

@@ -8,6 +8,7 @@ import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.bytedeco.javacv.Frame;
 
 import java.io.ByteArrayInputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpRequest;
@@ -34,20 +35,22 @@ public class FrameGrabber {
 
     private final DisplayLayerResources pools;
     private final URI uri;
-    
+    private final String name;
+
     private ByteBuffer buffer;
     private FFmpegFrameGrabber grabber;
     private long refTimestamp;
     private long deltaTimestamp;
     private Frame lastFrame;
-    
+
     private ShortBuffer tempAudioBuffer;
-    
+
     private ArrayDeque<AudioStreamingBuffer> startAudioBuffers;
-    
-    public FrameGrabber(DisplayLayerResources pools, URI uri) {
+
+    public FrameGrabber(DisplayLayerResources pools, URI uri, String name) {
         this.pools = pools;
         this.uri = uri;
+        this.name = name;
     }
 
     public void start() throws IOException {
@@ -55,15 +58,21 @@ public class FrameGrabber {
         if (this.grabber != null || this.buffer != null) {
             throw new IllegalStateException("already started");
         }
-        
+
         try {
 
             HttpRequest req = HttpRequest.newBuilder(this.uri).GET().timeout(Duration.ofSeconds(1)).build();
             this.buffer = this.pools.allocRawFileBuffer();
             this.pools.getHttpClient().send(req, info -> new BufferResponseSubscriber(this.buffer));
-            ByteArrayInputStream grabberStream = new ByteArrayInputStream(this.buffer.array(), this.buffer.position(), this.buffer.remaining());
 
-            this.grabber = new FFmpegFrameGrabber(grabberStream);
+            this.grabber = new FFmpegFrameGrabber(new FilterInputStream(
+                new ByteArrayInputStream(this.buffer.array(), this.buffer.position(), this.buffer.remaining())
+            ) {
+                @Override
+                public String toString() {
+                    return name;
+                }
+            });
             this.grabber.startUnsafe();
 
             this.tempAudioBuffer = this.pools.allocAudioBuffer();
@@ -71,7 +80,7 @@ public class FrameGrabber {
             this.refTimestamp = 0L;
             this.deltaTimestamp = 0L;
             this.lastFrame = null;
-            
+
             this.startAudioBuffers = new ArrayDeque<>();
 
             Frame frame;
@@ -118,18 +127,18 @@ public class FrameGrabber {
         if (this.grabber == null || this.buffer == null || this.tempAudioBuffer == null) {
             throw new IllegalStateException("Frame grabber is not started.");
         }
-        
+
         try {
             this.grabber.releaseUnsafe();
         } catch (IOException ignored) { }
-        
+
         this.pools.freeRawFileBuffer(this.buffer);
         this.pools.freeAudioBuffer(this.tempAudioBuffer);
-        
+
         this.buffer = null;
         this.grabber = null;
         this.tempAudioBuffer = null;
-        
+
         if (this.startAudioBuffers != null) {
             this.startAudioBuffers.forEach(AudioStreamingBuffer::free);
             this.startAudioBuffers = null;
@@ -151,9 +160,9 @@ public class FrameGrabber {
             this.startAudioBuffers.forEach(audioBufferConsumer);
             this.startAudioBuffers = null;
         }
-        
+
         long realTimestamp = timestamp + this.refTimestamp;
-        
+
         if (this.lastFrame != null) {
             if (this.lastFrame.timestamp <= realTimestamp) {
                 Frame frame = this.lastFrame;
@@ -163,7 +172,7 @@ public class FrameGrabber {
                 return null;
             }
         }
-        
+
         Frame frame;
         while ((frame = this.grabber.grab()) != null) {
             if (frame.image != null) {
@@ -200,26 +209,26 @@ public class FrameGrabber {
             }
         }
     }
-    
+
     /**
      * Internal class that serves as an HTTP response subscriber that fills a given {@link ByteBuffer}.
      * The buffer is automatically rewinded before pushing data into it.
      */
     private static class BufferResponseSubscriber implements HttpResponse.BodySubscriber<Object> {
-        
+
         private final CompletableFuture<Object> future = new CompletableFuture<>();
         private final ByteBuffer buffer;
         private Flow.Subscription subscription;
-        
+
         public BufferResponseSubscriber(ByteBuffer buffer) {
             this.buffer = buffer;
         }
-        
+
         @Override
         public CompletionStage<Object> getBody() {
             return this.future;
         }
-        
+
         @Override
         public void onSubscribe(Flow.Subscription subscription) {
             if (this.subscription != null) {
@@ -229,7 +238,7 @@ public class FrameGrabber {
             this.subscription.request(Long.MAX_VALUE);
             this.buffer.clear();
         }
-        
+
         @Override
         public void onNext(List<ByteBuffer> item) {
             for (ByteBuffer buf : item) {
@@ -241,18 +250,18 @@ public class FrameGrabber {
                 }
             }
         }
-        
+
         @Override
         public void onError(Throwable throwable) {
             this.future.completeExceptionally(throwable);
         }
-        
+
         @Override
         public void onComplete() {
             this.buffer.flip();
             this.future.complete(null);
         }
-        
+
     }
 
 }
