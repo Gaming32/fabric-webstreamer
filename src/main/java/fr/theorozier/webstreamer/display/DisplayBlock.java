@@ -1,8 +1,11 @@
 package fr.theorozier.webstreamer.display;
 
+import fr.theorozier.webstreamer.WebStreamerMod;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -79,6 +82,48 @@ public class DisplayBlock extends BaseEntityBlock {
             case WEST -> SHAPE_WEST;
             default -> throw new AssertionError();
         };
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        level.scheduleTick(pos, this, 1);
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (!(level.getBlockEntity(pos) instanceof DisplayBlockEntity entity)) {
+            WebStreamerMod.LOGGER.warn("Couldn't find DisplayBlockEntity at {}", pos);
+            level.scheduleTick(pos, this, 1);
+            return;
+        }
+        entity.newUuid();
+        final DisplaysSavedData data = DisplaysSavedData.get(level);
+        if (data.getDisplays().put(entity.getUuid(), new DisplaysSavedData.SavedDisplay(
+            entity.getUuid(), level.dimension(), pos
+        )) != null) {
+            WebStreamerMod.LOGGER.warn("Replaced duplicate display {}", entity.getUuid());
+        }
+        data.setDirty();
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (level instanceof ServerLevel serverLevel) {
+            if (!(level.getBlockEntity(pos) instanceof DisplayBlockEntity entity)) {
+                WebStreamerMod.LOGGER.warn("Couldn't find DisplayBlockEntity at {}", pos);
+                level.scheduleTick(pos, this, 1);
+            } else {
+                final DisplaysSavedData data = DisplaysSavedData.get(serverLevel);
+                if (data.getDisplays().remove(entity.getUuid()) == null) {
+                    WebStreamerMod.LOGGER.warn("Failed to remove non-existent display {}", entity.getUuid());
+                }
+                data.setDirty();
+            }
+        }
+        super.onRemove(state, level, pos, newState, isMoving);
     }
 
     @NotNull

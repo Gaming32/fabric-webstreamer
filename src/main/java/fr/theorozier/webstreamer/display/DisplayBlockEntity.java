@@ -10,12 +10,14 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.UUID;
 
 public class DisplayBlockEntity extends BlockEntity {
 
@@ -24,6 +26,7 @@ public class DisplayBlockEntity extends BlockEntity {
     private float height = 1;
     private float audioDistance = 10f;
     private float audioVolume = 1f;
+    private UUID uuid = Mth.createInsecureUUID();
 
     public DisplayBlockEntity(BlockPos pos, BlockState state) {
         super(WebStreamerMod.DISPLAY_BLOCK_ENTITY, pos, state);
@@ -107,6 +110,8 @@ public class DisplayBlockEntity extends BlockEntity {
             displayNbt.putString("type", "");
         }
 
+        displayNbt.putUUID("uuid", uuid);
+
     }
 
     @Override
@@ -145,6 +150,10 @@ public class DisplayBlockEntity extends BlockEntity {
                 this.source.readNbt(displayNbt);
             } else {
                 this.source = NullDisplaySource.INSTANCE;
+            }
+
+            if (displayNbt.hasUUID("uuid")) {
+                this.uuid = displayNbt.getUUID("uuid");
             }
 
             this.markRenderDataSourceDirty();
@@ -202,4 +211,11 @@ public class DisplayBlockEntity extends BlockEntity {
         }
     }
 
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public void newUuid() {
+        uuid = Mth.createInsecureUUID();
+    }
 }
