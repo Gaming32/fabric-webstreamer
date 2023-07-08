@@ -1,6 +1,5 @@
 package fr.theorozier.webstreamer.display.render;
 
-import fr.theorozier.webstreamer.WebStreamerMod;
 import fr.theorozier.webstreamer.display.audio.AudioStreamingBuffer;
 import fr.theorozier.webstreamer.util.NamedInputStream;
 import net.fabricmc.api.EnvType;
@@ -12,15 +11,9 @@ import java.io.*;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.BufferOverflowException;
-import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 import java.time.Duration;
 import java.util.ArrayDeque;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Flow;
 import java.util.function.Consumer;
 
 /**
@@ -37,7 +30,6 @@ public class FrameGrabber {
     private final String name;
     private final byte[] initBytes;
 
-    private ByteBuffer buffer;
     private FFmpegFrameGrabber grabber;
     private long refTimestamp;
     private long deltaTimestamp;
@@ -56,17 +48,16 @@ public class FrameGrabber {
 
     public void start() throws IOException {
 
-        if (this.grabber != null || this.buffer != null) {
+        if (this.grabber != null) {
             throw new IllegalStateException("already started");
         }
 
         try {
 
             HttpRequest req = HttpRequest.newBuilder(this.uri).GET().timeout(Duration.ofSeconds(1)).build();
-            this.buffer = this.pools.allocRawFileBuffer();
-            this.pools.getHttpClient().send(req, info -> new BufferResponseSubscriber(this.buffer));
+            final byte[] buffer = this.pools.getHttpClient().send(req, HttpResponse.BodyHandlers.ofByteArray()).body();
 
-            InputStream inputStream = new ByteArrayInputStream(this.buffer.array(), this.buffer.position(), this.buffer.remaining());
+            InputStream inputStream = new ByteArrayInputStream(buffer);
             if (initBytes != null) {
                 inputStream = new SequenceInputStream(new ByteArrayInputStream(initBytes), inputStream);
             }
@@ -103,11 +94,6 @@ public class FrameGrabber {
                 this.grabber.releaseUnsafe();
             }
 
-            if (this.buffer != null) {
-                this.pools.freeRawFileBuffer(this.buffer);
-                this.buffer = null;
-            }
-
             if (this.tempAudioBuffer != null) {
                 this.pools.freeAudioBuffer(this.tempAudioBuffer);
                 this.tempAudioBuffer = null;
@@ -127,7 +113,7 @@ public class FrameGrabber {
 
     public void stop() {
 
-        if (this.grabber == null || this.buffer == null || this.tempAudioBuffer == null) {
+        if (this.grabber == null || this.tempAudioBuffer == null) {
             throw new IllegalStateException("Frame grabber is not started.");
         }
 
@@ -135,10 +121,8 @@ public class FrameGrabber {
             this.grabber.releaseUnsafe();
         } catch (IOException ignored) { }
 
-        this.pools.freeRawFileBuffer(this.buffer);
         this.pools.freeAudioBuffer(this.tempAudioBuffer);
 
-        this.buffer = null;
         this.grabber = null;
         this.tempAudioBuffer = null;
 
@@ -211,60 +195,6 @@ public class FrameGrabber {
                 audioBufferConsumer.accept(AudioStreamingBuffer.fromFrame(this.tempAudioBuffer, frame));
             }
         }
-    }
-
-    /**
-     * Internal class that serves as an HTTP response subscriber that fills a given {@link ByteBuffer}.
-     * The buffer is automatically rewinded before pushing data into it.
-     */
-    private static class BufferResponseSubscriber implements HttpResponse.BodySubscriber<Object> {
-
-        private final CompletableFuture<Object> future = new CompletableFuture<>();
-        private final ByteBuffer buffer;
-        private Flow.Subscription subscription;
-
-        public BufferResponseSubscriber(ByteBuffer buffer) {
-            this.buffer = buffer;
-        }
-
-        @Override
-        public CompletionStage<Object> getBody() {
-            return this.future;
-        }
-
-        @Override
-        public void onSubscribe(Flow.Subscription subscription) {
-            if (this.subscription != null) {
-                this.subscription.cancel();
-            }
-            this.subscription = subscription;
-            this.subscription.request(Long.MAX_VALUE);
-            this.buffer.clear();
-        }
-
-        @Override
-        public void onNext(List<ByteBuffer> item) {
-            for (ByteBuffer buf : item) {
-                try {
-                    this.buffer.put(buf);
-                } catch (BufferOverflowException e) {
-                    WebStreamerMod.LOGGER.error("Cannot fill the full raw file buffer because of overflow. current pos: {}, incoming buf: {}", this.buffer.position(), buf.remaining());
-                    this.future.completeExceptionally(e);
-                }
-            }
-        }
-
-        @Override
-        public void onError(Throwable throwable) {
-            this.future.completeExceptionally(throwable);
-        }
-
-        @Override
-        public void onComplete() {
-            this.buffer.flip();
-            this.future.complete(null);
-        }
-
     }
 
 }

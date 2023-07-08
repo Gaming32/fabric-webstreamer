@@ -24,10 +24,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Environment(EnvType.CLIENT)
 public class DisplayLayerResources {
 
-    /** 8 Mio buffer for pre-storing whole TransportStream file. */
-    private static final int RAW_FILE_BUFFER_SIZE = 1 << 23;
-    /** Limit to 256 Mio of raw file buffers. */
-    private static final int RAW_FILE_BUFFER_LIMIT = 32;
     /** 8 Kio buffer for converting (16 or 8 bits) stereo to mono 16 bits audio stream. */
     private static final int AUDIO_BUFFER_SIZE = 8192;
     /** Limit to 512 Kio of audio buffers. */
@@ -44,10 +40,8 @@ public class DisplayLayerResources {
     private final HttpClient httpClient = HttpClient.newBuilder()
         .followRedirects(HttpClient.Redirect.NORMAL)
         .build();
-    private final List<ByteBuffer> rawFileBuffers = new ArrayList<>();
     private final List<ShortBuffer> audioBuffers = new ArrayList<>();
 
-    private int rawFileBuffersCount = 0;
     private int audioBuffersCount = 0;
 
     public ExecutorService getExecutor() {
@@ -56,31 +50,6 @@ public class DisplayLayerResources {
 
     public HttpClient getHttpClient() {
         return this.httpClient;
-    }
-
-    /**
-     * Allocate an image buffer. Such buffers are backed by arrays to allow to
-     * create a {@link java.io.ByteArrayInputStream} from it.
-     */
-    public ByteBuffer allocRawFileBuffer() {
-        synchronized (this.rawFileBuffers) {
-            try {
-                return this.rawFileBuffers.remove(this.rawFileBuffers.size() - 1);
-            } catch (IndexOutOfBoundsException e) {
-                if (this.rawFileBuffersCount >= RAW_FILE_BUFFER_LIMIT) {
-                    throw new IllegalStateException("reached maximum number of allocated raw file buffers: " + RAW_FILE_BUFFER_LIMIT);
-                }
-                this.rawFileBuffersCount++;
-                WebStreamerMod.LOGGER.debug("Number of allocated raw file buffers: {}", this.rawFileBuffersCount);
-                return ByteBuffer.allocate(RAW_FILE_BUFFER_SIZE);
-            }
-        }
-    }
-
-    public void freeRawFileBuffer(ByteBuffer buffer) {
-        synchronized (this.rawFileBuffers) {
-            this.rawFileBuffers.add(buffer);
-        }
     }
 
     /**
