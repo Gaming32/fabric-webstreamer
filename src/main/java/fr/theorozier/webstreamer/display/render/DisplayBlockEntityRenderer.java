@@ -6,6 +6,7 @@ import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
 import fr.theorozier.webstreamer.WebStreamerClientMod;
 import fr.theorozier.webstreamer.WebStreamerMod;
+import fr.theorozier.webstreamer.display.DisplayBlock;
 import fr.theorozier.webstreamer.display.DisplayBlockEntity;
 import fr.theorozier.webstreamer.display.url.DisplayUrl;
 import fr.theorozier.webstreamer.mixin.LevelRendererInvoker;
@@ -19,10 +20,13 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 
@@ -177,5 +181,17 @@ public class DisplayBlockEntityRenderer implements BlockEntityRenderer<DisplayBl
     @Override
     public boolean shouldRenderOffScreen(@NotNull DisplayBlockEntity blockEntity) {
         return true;
+    }
+
+    @Override
+    public boolean shouldRender(DisplayBlockEntity blockEntity, Vec3 cameraPos) {
+        final Direction.Axis facing = blockEntity.getBlockState().getValue(DisplayBlock.HORIZONTAL_FACING).getAxis();
+        final double distance = getViewDistance();
+        return AABB.ofSize(
+            Vec3.atCenterOf(blockEntity.getBlockPos()),
+            facing.choose(0, 1, 1) * blockEntity.getWidth() + 2 * distance,
+            facing.choose(1, 0, 1) * blockEntity.getHeight() + 2 * distance,
+            facing.choose(1, 1, 0) * blockEntity.getWidth() + 2 * distance
+        ).contains(cameraPos);
     }
 }

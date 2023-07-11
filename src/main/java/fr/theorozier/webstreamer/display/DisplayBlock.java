@@ -20,6 +20,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -29,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DisplayBlock extends BaseEntityBlock {
+
+    public static final DirectionProperty HORIZONTAL_FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     private static final VoxelShape SHAPE_NORTH = Shapes.box(0, 0, 0.9, 1, 1, 1);
     private static final VoxelShape SHAPE_SOUTH = Shapes.box(0, 0, 0, 1, 1, 0.1);
@@ -46,7 +49,7 @@ public class DisplayBlock extends BaseEntityBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(BlockStateProperties.HORIZONTAL_FACING);
+        builder.add(HORIZONTAL_FACING);
     }
 
     @Nullable
@@ -68,14 +71,14 @@ public class DisplayBlock extends BaseEntityBlock {
         if (dir == Direction.DOWN || dir == Direction.UP) {
             dir = ctx.getHorizontalDirection().getOpposite();
         }
-        return this.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, dir);
+        return this.defaultBlockState().setValue(HORIZONTAL_FACING, dir);
     }
 
     @NotNull
     @Override
     @SuppressWarnings("deprecation")
     public VoxelShape getShape(BlockState state, @NotNull BlockGetter world, @NotNull BlockPos pos, @NotNull CollisionContext context) {
-        return switch (state.getValue(BlockStateProperties.HORIZONTAL_FACING)) {
+        return switch (state.getValue(HORIZONTAL_FACING)) {
             case NORTH -> SHAPE_NORTH;
             case SOUTH -> SHAPE_SOUTH;
             case EAST -> SHAPE_EAST;
