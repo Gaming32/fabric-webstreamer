@@ -132,18 +132,17 @@ public class DisplayBlock extends BaseEntityBlock {
     @NotNull
     @Override
     @SuppressWarnings("deprecation")
-    public InteractionResult use(@NotNull BlockState state, Level world, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult hit) {
-        BlockEntity be = world.getBlockEntity(pos);
-        if (canUse(player) && be instanceof DisplayBlockEntity dbe) {
-            if (player instanceof DisplayBlockInteract interact) {
-                interact.openDisplayBlockScreen(dbe);
-                return InteractionResult.sidedSuccess(world.isClientSide);
-            } else {
-                return InteractionResult.CONSUME;
+    public InteractionResult use(@NotNull BlockState state, Level level, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult hit) {
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be instanceof DisplayBlockEntity dbe) {
+            if (level.isClientSide) {
+                return InteractionResult.sidedSuccess(true);
+            } else if (canUse(player)) {
+                player.openMenu(dbe);
+                return InteractionResult.sidedSuccess(false);
             }
-        } else {
-            return InteractionResult.PASS;
         }
+        return InteractionResult.PASS;
     }
 
     public static boolean canUse(@NotNull Player player) {

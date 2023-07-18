@@ -2,7 +2,9 @@ package fr.theorozier.webstreamer.display.screen;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import fr.theorozier.webstreamer.WebStreamerClientMod;
+import fr.theorozier.webstreamer.WebStreamerMod;
 import fr.theorozier.webstreamer.display.DisplayBlockEntity;
+import fr.theorozier.webstreamer.display.DisplayMenu;
 import fr.theorozier.webstreamer.display.DisplayNetworking;
 import fr.theorozier.webstreamer.display.source.DisplaySource;
 import fr.theorozier.webstreamer.display.source.RawDisplaySource;
@@ -13,11 +15,13 @@ import fr.theorozier.webstreamer.twitch.TwitchClient;
 import fr.theorozier.webstreamer.util.AsyncProcessor;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.GameNarrator;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
@@ -28,7 +32,7 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 @Environment(EnvType.CLIENT)
-public class DisplayBlockScreen extends Screen {
+public class DisplayScreen extends Screen implements MenuAccess<DisplayMenu> {
 
     private static final Component CONF_TEXT = Component.translatable("gui.webstreamer.display.conf");
     private static final Component WIDTH_TEXT = Component.translatable("gui.webstreamer.display.width");
@@ -49,6 +53,7 @@ public class DisplayBlockScreen extends Screen {
     private static final Component ERR_CHANNEL_OFFLINE_TEXT = Component.translatable("gui.webstreamer.display.error.channelOffline");
     private static final String ERR_UNKNOWN_TEXT_KEY = "gui.webstreamer.display.error.unknown";
 
+    private final DisplayMenu menu;
     private final DisplayBlockEntity blockEntity;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -68,10 +73,18 @@ public class DisplayBlockScreen extends Screen {
     private float displayAudioDistance;
     private float displayAudioVolume;
 
-    public DisplayBlockScreen(DisplayBlockEntity blockEntity) {
+    public DisplayScreen(DisplayMenu menu, Inventory inventory, Component title) {
+        super(title);
 
-        super(GameNarrator.NO_TITLE);
-        this.blockEntity = blockEntity;
+        this.menu = menu;
+
+        assert Minecraft.getInstance().level != null;
+        this.blockEntity = Minecraft.getInstance().level.getBlockEntity(menu.getPos(), WebStreamerMod.DISPLAY_BLOCK_ENTITY).orElse(null);
+        if (blockEntity == null) {
+            WebStreamerMod.LOGGER.warn("DisplayBlockEntity not found at {}", menu.getPos());
+            onClose();
+            return;
+        }
 
         DisplaySource source = blockEntity.getSource();
         if (source instanceof RawDisplaySource rawSource) {
@@ -90,6 +103,12 @@ public class DisplayBlockScreen extends Screen {
         this.displayAudioDistance = blockEntity.getAudioDistance();
         this.displayAudioVolume = blockEntity.getAudioVolume();
 
+    }
+
+    @NotNull
+    @Override
+    public DisplayMenu getMenu() {
+        return menu;
     }
 
     private void setSourceScreen(SourceScreen<?> sourceScreen) {

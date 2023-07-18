@@ -2,6 +2,7 @@ package fr.theorozier.webstreamer;
 
 import fr.theorozier.webstreamer.display.render.DisplayBlockEntityRenderer;
 import fr.theorozier.webstreamer.display.render.DisplayLayerManager;
+import fr.theorozier.webstreamer.display.screen.DisplayScreen;
 import fr.theorozier.webstreamer.display.url.DisplayUrlManager;
 import fr.theorozier.webstreamer.twitch.TwitchClient;
 import net.fabricmc.api.ClientModInitializer;
@@ -9,6 +10,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
+import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.RenderType;
 import org.bytedeco.ffmpeg.global.avutil;
 import org.bytedeco.javacpp.Loader;
@@ -40,6 +42,8 @@ public class WebStreamerClientMod implements ClientModInitializer {
 
         BlockEntityRendererRegistry.register(WebStreamerMod.DISPLAY_BLOCK_ENTITY, DisplayBlockEntityRenderer::new);
         BlockRenderLayerMap.INSTANCE.putBlock(WebStreamerMod.DISPLAY_BLOCK, RenderType.cutout());
+
+        MenuScreens.register(WebStreamerMod.DISPLAY_SCREEN_HANDLER, DisplayScreen::new);
 
         System.setProperty("org.bytedeco.javacpp.logger", "slf4j");
 

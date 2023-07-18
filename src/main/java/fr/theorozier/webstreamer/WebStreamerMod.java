@@ -1,12 +1,10 @@
 package fr.theorozier.webstreamer;
 
-import fr.theorozier.webstreamer.display.DisplayBlock;
-import fr.theorozier.webstreamer.display.DisplayBlockEntity;
-import fr.theorozier.webstreamer.display.DisplayBlockItem;
-import fr.theorozier.webstreamer.display.DisplayNetworking;
+import fr.theorozier.webstreamer.display.*;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.core.Registry;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.block.Block;
@@ -18,22 +16,21 @@ public class WebStreamerMod implements ModInitializer {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("WebStreamer");
 
-    public static Block DISPLAY_BLOCK;
-    public static DisplayBlockItem DISPLAY_ITEM;
-    public static BlockEntityType<DisplayBlockEntity> DISPLAY_BLOCK_ENTITY;
+    public static final Block DISPLAY_BLOCK = new DisplayBlock();
+    public static final DisplayBlockItem DISPLAY_ITEM = new DisplayBlockItem(DISPLAY_BLOCK, new FabricItemSettings().tab(CreativeModeTab.TAB_REDSTONE));
+    public static final BlockEntityType<DisplayBlockEntity> DISPLAY_BLOCK_ENTITY = FabricBlockEntityTypeBuilder.create(DisplayBlockEntity::new, DISPLAY_BLOCK).build();
+    public static final ExtendedScreenHandlerType<DisplayMenu> DISPLAY_SCREEN_HANDLER = new ExtendedScreenHandlerType<>(DisplayMenu::new);
 
     @Override
     public void onInitialize() {
 
-        DISPLAY_BLOCK = new DisplayBlock();
-        DISPLAY_ITEM = new DisplayBlockItem(DISPLAY_BLOCK, new FabricItemSettings().tab(CreativeModeTab.TAB_REDSTONE));
-        
         Registry.register(Registry.BLOCK, "webstreamer:display", DISPLAY_BLOCK);
         Registry.register(Registry.ITEM, "webstreamer:display", DISPLAY_ITEM);
-        DISPLAY_BLOCK_ENTITY = Registry.register(Registry.BLOCK_ENTITY_TYPE, "webstreamer:display", FabricBlockEntityTypeBuilder.create(DisplayBlockEntity::new, DISPLAY_BLOCK).build());
-        
+        Registry.register(Registry.BLOCK_ENTITY_TYPE, "webstreamer:display", DISPLAY_BLOCK_ENTITY);
+        Registry.register(Registry.MENU, "webstreamer:display", DISPLAY_SCREEN_HANDLER);
+
         DisplayNetworking.registerDisplayUpdateReceiver();
-        
+
         LOGGER.info("WebStreamer started.");
 
     }
