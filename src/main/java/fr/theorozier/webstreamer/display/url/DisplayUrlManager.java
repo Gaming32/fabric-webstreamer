@@ -1,6 +1,6 @@
 package fr.theorozier.webstreamer.display.url;
 
-import fr.theorozier.webstreamer.WebStreamerMod;
+import fr.theorozier.webstreamer.WebStreamer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
@@ -16,7 +16,7 @@ public class DisplayUrlManager {
     public DisplayUrl allocUri(URI uri) {
         return urlCache.computeIfAbsent(uri, key -> {
             final DisplayUrl result = new DisplayUrl(key, urlCache.size() + 1);
-            WebStreamerMod.LOGGER.info("Allocated a new display url {}.", result);
+            WebStreamer.LOGGER.info("Allocated a new display url {}.", result);
             return result;
         });
     }

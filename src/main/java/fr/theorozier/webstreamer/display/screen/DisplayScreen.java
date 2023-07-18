@@ -1,8 +1,8 @@
 package fr.theorozier.webstreamer.display.screen;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import fr.theorozier.webstreamer.WebStreamerClientMod;
-import fr.theorozier.webstreamer.WebStreamerMod;
+import fr.theorozier.webstreamer.WebStreamer;
+import fr.theorozier.webstreamer.WebStreamerClient;
 import fr.theorozier.webstreamer.display.DisplayBlockEntity;
 import fr.theorozier.webstreamer.display.DisplayMenu;
 import fr.theorozier.webstreamer.display.DisplayNetworking;
@@ -79,9 +79,9 @@ public class DisplayScreen extends Screen implements MenuAccess<DisplayMenu> {
         this.menu = menu;
 
         assert Minecraft.getInstance().level != null;
-        this.blockEntity = Minecraft.getInstance().level.getBlockEntity(menu.getPos(), WebStreamerMod.DISPLAY_BLOCK_ENTITY).orElse(null);
+        this.blockEntity = Minecraft.getInstance().level.getBlockEntity(menu.getPos(), WebStreamer.DISPLAY_BLOCK_ENTITY).orElse(null);
         if (blockEntity == null) {
-            WebStreamerMod.LOGGER.warn("DisplayBlockEntity not found at {}", menu.getPos());
+            WebStreamer.LOGGER.warn("DisplayBlockEntity not found at {}", menu.getPos());
             onClose();
             return;
         }
@@ -344,7 +344,7 @@ public class DisplayScreen extends Screen implements MenuAccess<DisplayMenu> {
         TwitchSourceScreen(TwitchDisplaySource source) {
             super(source);
             this.firstQuality = source.getQuality();
-            this.asyncPlaylist = new AsyncProcessor<>(WebStreamerClientMod.TWITCH_CLIENT::requestPlaylist);
+            this.asyncPlaylist = new AsyncProcessor<>(WebStreamerClient.TWITCH_CLIENT::requestPlaylist);
         }
 
         TwitchSourceScreen() {

@@ -1,6 +1,6 @@
 package fr.theorozier.webstreamer.display.render;
 
-import fr.theorozier.webstreamer.WebStreamerMod;
+import fr.theorozier.webstreamer.WebStreamer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +65,7 @@ public class DisplayLayerResources {
                     throw new IllegalStateException("reached maximum number of allocated audio buffers: " + AUDIO_BUFFER_LIMIT);
                 }
                 this.audioBuffersCount++;
-                WebStreamerMod.LOGGER.debug("Number of allocated sound buffers: {}", this.audioBuffersCount);
+                WebStreamer.LOGGER.debug("Number of allocated sound buffers: {}", this.audioBuffersCount);
                 return ByteBuffer.allocateDirect(AUDIO_BUFFER_SIZE).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
             }
         }

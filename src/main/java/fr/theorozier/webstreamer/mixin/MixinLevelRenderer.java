@@ -1,6 +1,6 @@
 package fr.theorozier.webstreamer.mixin;
 
-import fr.theorozier.webstreamer.WebStreamerClientMod;
+import fr.theorozier.webstreamer.WebStreamerClient;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -17,13 +17,13 @@ public class MixinLevelRenderer {
 
     @Inject(method = "renderLevel", at = @At("HEAD"))
     public void render(CallbackInfo info) {
-        WebStreamerClientMod.DISPLAY_LAYERS.tick();
+        WebStreamerClient.DISPLAY_LAYERS.tick();
     }
 
     @Inject(method = "setLevel", at = @At("HEAD"))
     public void setWorld(@Nullable ClientLevel world, CallbackInfo info) {
         if (world == null) {
-            WebStreamerClientMod.DISPLAY_LAYERS.clear();
+            WebStreamerClient.DISPLAY_LAYERS.clear();
         }
     }
 

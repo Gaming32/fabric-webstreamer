@@ -27,7 +27,7 @@ import java.nio.file.*;
 import java.util.*;
 
 @Environment(EnvType.CLIENT)
-public class WebStreamerClientMod implements ClientModInitializer {
+public class WebStreamerClient implements ClientModInitializer {
 
     private static final String MAVEN_URL = "https://repo.maven.apache.org/maven2/";
 
@@ -40,10 +40,10 @@ public class WebStreamerClientMod implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
 
-        BlockEntityRendererRegistry.register(WebStreamerMod.DISPLAY_BLOCK_ENTITY, DisplayBlockEntityRenderer::new);
-        BlockRenderLayerMap.INSTANCE.putBlock(WebStreamerMod.DISPLAY_BLOCK, RenderType.cutout());
+        BlockEntityRendererRegistry.register(WebStreamer.DISPLAY_BLOCK_ENTITY, DisplayBlockEntityRenderer::new);
+        BlockRenderLayerMap.INSTANCE.putBlock(WebStreamer.DISPLAY_BLOCK, RenderType.cutout());
 
-        MenuScreens.register(WebStreamerMod.DISPLAY_SCREEN_HANDLER, DisplayScreen::new);
+        MenuScreens.register(WebStreamer.DISPLAY_SCREEN_HANDLER, DisplayScreen::new);
 
         System.setProperty("org.bytedeco.javacpp.logger", "slf4j");
 
@@ -53,7 +53,7 @@ public class WebStreamerClientMod implements ClientModInitializer {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        WebStreamerMod.LOGGER.info("JavaCPP version: {}", javacppVersion);
+        WebStreamer.LOGGER.info("JavaCPP version: {}", javacppVersion);
 
         LIB_ROOTS.add(getLibRoot(downloadArtifact(
             "org.bytedeco", "javacpp", javacppVersion, Loader.getPlatform()
@@ -88,7 +88,7 @@ public class WebStreamerClientMod implements ClientModInitializer {
                     try {
                         return resultPath.toUri().toURL();
                     } catch (MalformedURLException e) {
-                        WebStreamerMod.LOGGER.warn("Failed to convert path {} to URL", resultPath, e);
+                        WebStreamer.LOGGER.warn("Failed to convert path {} to URL", resultPath, e);
                     }
                 }
                 return null;
@@ -152,10 +152,10 @@ public class WebStreamerClientMod implements ClientModInitializer {
             artifact + '-' + version + (classifier != null ? '-' + classifier : "") + ".jar";
         final Path destPath = Path.of(System.getProperty("user.home")).resolve(".m2/repository").resolve(mavenPath);
         if (Files.isRegularFile(destPath)) {
-            WebStreamerMod.LOGGER.info("Skipping download of {}, as it already exists in Maven Local", prettyName);
+            WebStreamer.LOGGER.info("Skipping download of {}, as it already exists in Maven Local", prettyName);
             return destPath;
         }
-        WebStreamerMod.LOGGER.info("Downloading {} from Maven Central", prettyName);
+        WebStreamer.LOGGER.info("Downloading {} from Maven Central", prettyName);
         try {
             Files.createDirectories(destPath.getParent());
             final URL downloadUrl = new URL(MAVEN_URL + mavenPath);
@@ -163,7 +163,7 @@ public class WebStreamerClientMod implements ClientModInitializer {
                 Files.copy(is, destPath, StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (Exception e) {
-            WebStreamerMod.LOGGER.error("Failed to download {} from Maven Central", prettyName, e);
+            WebStreamer.LOGGER.error("Failed to download {} from Maven Central", prettyName, e);
             final RuntimeException throwException = e instanceof RuntimeException re ? re : new RuntimeException(e);
             try {
                 Files.delete(destPath);
@@ -172,7 +172,7 @@ public class WebStreamerClientMod implements ClientModInitializer {
             }
             throw throwException;
         }
-        WebStreamerMod.LOGGER.info("Downloaded {} from Maven Central", prettyName);
+        WebStreamer.LOGGER.info("Downloaded {} from Maven Central", prettyName);
         return destPath;
     }
 

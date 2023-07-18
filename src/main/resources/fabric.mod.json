@@ -19,10 +19,10 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "fr.theorozier.webstreamer.WebStreamerMod"
+      "fr.theorozier.webstreamer.WebStreamer"
     ],
     "client": [
-      "fr.theorozier.webstreamer.WebStreamerClientMod"
+      "fr.theorozier.webstreamer.WebStreamerClient"
     ]
   },
   "mixins": [

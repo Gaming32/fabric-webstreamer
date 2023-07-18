@@ -1,6 +1,6 @@
 package fr.theorozier.webstreamer.display;
 
-import fr.theorozier.webstreamer.WebStreamerMod;
+import fr.theorozier.webstreamer.WebStreamer;
 import fr.theorozier.webstreamer.display.source.DisplaySource;
 import fr.theorozier.webstreamer.display.source.NullDisplaySource;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
@@ -36,7 +36,7 @@ public class DisplayBlockEntity extends BlockEntity implements ExtendedScreenHan
     private UUID uuid = Mth.createInsecureUUID();
 
     public DisplayBlockEntity(BlockPos pos, BlockState state) {
-        super(WebStreamerMod.DISPLAY_BLOCK_ENTITY, pos, state);
+        super(WebStreamer.DISPLAY_BLOCK_ENTITY, pos, state);
     }
 
     public void setSource(@NotNull DisplaySource source) {

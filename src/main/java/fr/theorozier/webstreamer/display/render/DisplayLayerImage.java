@@ -1,7 +1,7 @@
 package fr.theorozier.webstreamer.display.render;
 
 import com.mojang.blaze3d.platform.TextureUtil;
-import fr.theorozier.webstreamer.WebStreamerMod;
+import fr.theorozier.webstreamer.WebStreamer;
 import fr.theorozier.webstreamer.display.url.DisplayUrl;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -52,7 +52,7 @@ public class DisplayLayerImage extends DisplayLayer {
 
                 img = this.futureImage.get();
 
-                WebStreamerMod.LOGGER.info(makeLog("Uploading image... (channels: {}, pixel size: {})"), img.channels, img.buffer.remaining() / (img.width * img.height));
+                WebStreamer.LOGGER.info(makeLog("Uploading image... (channels: {}, pixel size: {})"), img.channels, img.buffer.remaining() / (img.width * img.height));
 
                 this.tex.uploadRaw(img.buffer, GL11.GL_RGBA, img.width, img.height, img.width, GL11.GL_RGBA, 4);
                 this.imageUploaded = true;
@@ -60,7 +60,7 @@ public class DisplayLayerImage extends DisplayLayer {
             } catch (InterruptedException | CancellationException e) {
                 // Should not happen
             } catch (ExecutionException e) {
-                WebStreamerMod.LOGGER.error(makeLog("Failed to request image, retrying in {} seconds."), FAILING_IMAGE_REQUEST_INTERVAL / 1000000000, e.getCause());
+                WebStreamer.LOGGER.error(makeLog("Failed to request image, retrying in {} seconds."), FAILING_IMAGE_REQUEST_INTERVAL / 1000000000, e.getCause());
                 this.imageNextRequestTimestamp = now + FAILING_IMAGE_REQUEST_INTERVAL;
             } finally {
                 this.futureImage = null;

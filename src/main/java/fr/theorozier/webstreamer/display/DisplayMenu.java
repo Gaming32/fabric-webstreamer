@@ -1,6 +1,6 @@
 package fr.theorozier.webstreamer.display;
 
-import fr.theorozier.webstreamer.WebStreamerMod;
+import fr.theorozier.webstreamer.WebStreamer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -13,12 +13,12 @@ public class DisplayMenu extends AbstractContainerMenu {
     private final BlockPos pos;
 
     public DisplayMenu(int syncId, Inventory inventory, FriendlyByteBuf buf) {
-        super(WebStreamerMod.DISPLAY_SCREEN_HANDLER, syncId);
+        super(WebStreamer.DISPLAY_SCREEN_HANDLER, syncId);
         pos = buf.readBlockPos();
     }
 
     public DisplayMenu(int syncId, BlockPos pos) {
-        super(WebStreamerMod.DISPLAY_SCREEN_HANDLER, syncId);
+        super(WebStreamer.DISPLAY_SCREEN_HANDLER, syncId);
         this.pos = pos;
     }
 

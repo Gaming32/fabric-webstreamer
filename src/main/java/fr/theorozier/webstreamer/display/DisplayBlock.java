@@ -1,6 +1,6 @@
 package fr.theorozier.webstreamer.display;
 
-import fr.theorozier.webstreamer.WebStreamerMod;
+import fr.theorozier.webstreamer.WebStreamer;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -97,7 +97,7 @@ public class DisplayBlock extends BaseEntityBlock {
     @SuppressWarnings("deprecation")
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         if (!(level.getBlockEntity(pos) instanceof DisplayBlockEntity entity)) {
-            WebStreamerMod.LOGGER.warn("Couldn't find DisplayBlockEntity at {}", pos);
+            WebStreamer.LOGGER.warn("Couldn't find DisplayBlockEntity at {}", pos);
             level.scheduleTick(pos, this, 1);
             return;
         }
@@ -106,7 +106,7 @@ public class DisplayBlock extends BaseEntityBlock {
         if (data.getDisplays().put(entity.getUuid(), new DisplaysSavedData.SavedDisplay(
             entity.getUuid(), level.dimension(), pos
         )) != null) {
-            WebStreamerMod.LOGGER.warn("Replaced duplicate display {}", entity.getUuid());
+            WebStreamer.LOGGER.warn("Replaced duplicate display {}", entity.getUuid());
         }
         data.setDirty();
     }
@@ -116,12 +116,12 @@ public class DisplayBlock extends BaseEntityBlock {
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (level instanceof ServerLevel serverLevel) {
             if (!(level.getBlockEntity(pos) instanceof DisplayBlockEntity entity)) {
-                WebStreamerMod.LOGGER.warn("Couldn't find DisplayBlockEntity at {}", pos);
+                WebStreamer.LOGGER.warn("Couldn't find DisplayBlockEntity at {}", pos);
                 level.scheduleTick(pos, this, 1);
             } else {
                 final DisplaysSavedData data = DisplaysSavedData.get(serverLevel);
                 if (data.getDisplays().remove(entity.getUuid()) == null) {
-                    WebStreamerMod.LOGGER.warn("Failed to remove non-existent display {}", entity.getUuid());
+                    WebStreamer.LOGGER.warn("Failed to remove non-existent display {}", entity.getUuid());
                 }
                 data.setDirty();
             }

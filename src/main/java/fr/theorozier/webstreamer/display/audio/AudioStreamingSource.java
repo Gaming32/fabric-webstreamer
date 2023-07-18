@@ -1,6 +1,6 @@
 package fr.theorozier.webstreamer.display.audio;
 
-import fr.theorozier.webstreamer.WebStreamerMod;
+import fr.theorozier.webstreamer.WebStreamer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.core.Vec3i;
@@ -131,7 +131,7 @@ public class AudioStreamingSource {
         this.checkValid();
 
         if (buffer.timestamp <= this.lastBufferTimestamp) {
-            WebStreamerMod.LOGGER.debug(
+            WebStreamer.LOGGER.debug(
                 "given {} us, expected more than {} us. This usually occurs on stream restart.",
                 buffer.timestamp, this.lastBufferTimestamp
             );
@@ -178,7 +178,7 @@ public class AudioStreamingSource {
     static boolean checkErrors(String sectionName) {
         int i = alGetError();
         if (i != 0) {
-            WebStreamerMod.LOGGER.error("{}: {}", sectionName, getErrorMessage(i));
+            WebStreamer.LOGGER.error("{}: {}", sectionName, getErrorMessage(i));
             return true;
         } else {
             return false;

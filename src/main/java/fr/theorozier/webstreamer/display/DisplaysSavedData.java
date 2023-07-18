@@ -1,6 +1,6 @@
 package fr.theorozier.webstreamer.display;
 
-import fr.theorozier.webstreamer.WebStreamerMod;
+import fr.theorozier.webstreamer.WebStreamer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
@@ -49,7 +49,7 @@ public class DisplaysSavedData extends SavedData {
 
         public boolean checkValid() {
             if (dimension == null) {
-                WebStreamerMod.LOGGER.warn("Invalid SavedDisplay " + uuid + ": dimension == null");
+                WebStreamer.LOGGER.warn("Invalid SavedDisplay " + uuid + ": dimension == null");
                 return false;
             }
             return true;

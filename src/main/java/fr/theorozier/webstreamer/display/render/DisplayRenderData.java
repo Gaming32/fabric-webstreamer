@@ -1,7 +1,7 @@
 package fr.theorozier.webstreamer.display.render;
 
-import fr.theorozier.webstreamer.WebStreamerClientMod;
-import fr.theorozier.webstreamer.WebStreamerMod;
+import fr.theorozier.webstreamer.WebStreamer;
+import fr.theorozier.webstreamer.WebStreamerClient;
 import fr.theorozier.webstreamer.display.DisplayBlockEntity;
 import fr.theorozier.webstreamer.display.url.DisplayUrl;
 import net.fabricmc.api.EnvType;
@@ -59,14 +59,14 @@ public class DisplayRenderData {
             try {
                 URI uri = this.futureUrl.get();
                 if (uri == null) {
-                    WebStreamerMod.LOGGER.info(this.display.makeLog("No URI found for the display."));
+                    WebStreamer.LOGGER.info(this.display.makeLog("No URI found for the display."));
                 } else {
-                    this.url = WebStreamerClientMod.DISPLAY_URLS.allocUri(uri);
+                    this.url = WebStreamerClient.DISPLAY_URLS.allocUri(uri);
                 }
             } catch (InterruptedException | CancellationException e) {
                 // Cancel should not happen.
             } catch (ExecutionException e) {
-                WebStreamerMod.LOGGER.warn(this.display.makeLog("Unhandled error while getting source uri."), e);
+                WebStreamer.LOGGER.warn(this.display.makeLog("Unhandled error while getting source uri."), e);
             } finally {
                 this.futureUrl = null;
             }

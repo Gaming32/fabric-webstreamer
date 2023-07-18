@@ -4,8 +4,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
-import fr.theorozier.webstreamer.WebStreamerClientMod;
-import fr.theorozier.webstreamer.WebStreamerMod;
+import fr.theorozier.webstreamer.WebStreamerClient;
+import fr.theorozier.webstreamer.WebStreamer;
 import fr.theorozier.webstreamer.display.DisplayBlock;
 import fr.theorozier.webstreamer.display.DisplayBlockEntity;
 import fr.theorozier.webstreamer.display.url.DisplayUrl;
@@ -52,7 +52,7 @@ public class DisplayBlockEntityRenderer implements BlockEntityRenderer<DisplayBl
         assert entity.getLevel() != null;
 
         DisplayRenderData renderData = (DisplayRenderData) entity.getRenderData();
-        DisplayLayerManager layerManager = WebStreamerClientMod.DISPLAY_LAYERS;
+        DisplayLayerManager layerManager = WebStreamerClient.DISPLAY_LAYERS;
 
         DisplayUrl url = renderData.getUrl(layerManager.getResources().getExecutor());
 
@@ -64,7 +64,7 @@ public class DisplayBlockEntityRenderer implements BlockEntityRenderer<DisplayBl
 
             boolean hasDisplayEquipped = StreamSupport.stream(player.getAllSlots().spliterator(), false)
                     .map(ItemStack::getItem)
-                    .anyMatch(WebStreamerMod.DISPLAY_ITEM::equals);
+                    .anyMatch(WebStreamer.DISPLAY_ITEM::equals);
 
             if (hasDisplayEquipped) {
 

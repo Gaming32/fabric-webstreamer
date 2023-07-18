@@ -1,7 +1,7 @@
 package fr.theorozier.webstreamer.display.source;
 
-import fr.theorozier.webstreamer.WebStreamerClientMod;
-import fr.theorozier.webstreamer.WebStreamerMod;
+import fr.theorozier.webstreamer.WebStreamer;
+import fr.theorozier.webstreamer.WebStreamerClient;
 import fr.theorozier.webstreamer.playlist.Playlist;
 import fr.theorozier.webstreamer.playlist.PlaylistQuality;
 import fr.theorozier.webstreamer.twitch.TwitchClient;
@@ -53,11 +53,11 @@ public class TwitchDisplaySource implements DisplaySource {
     public URI getUri() {
         if (this.channel != null && this.quality != null) {
             try {
-                Playlist playlist = WebStreamerClientMod.TWITCH_CLIENT.requestPlaylist(this.channel);
+                Playlist playlist = WebStreamerClient.TWITCH_CLIENT.requestPlaylist(this.channel);
                 PlaylistQuality quality = playlist.getQuality(this.quality);
                 return quality.uri();
             } catch (TwitchClient.PlaylistException e) {
-                WebStreamerMod.LOGGER.error("Failed to request twitch channel", e);
+                WebStreamer.LOGGER.error("Failed to request twitch channel", e);
             }
         }
         return null;
@@ -66,8 +66,8 @@ public class TwitchDisplaySource implements DisplaySource {
     @Override
     public void resetUri() {
         if (this.channel != null) {
-            WebStreamerClientMod.TWITCH_CLIENT.forgetPlaylist(this.channel);
-            WebStreamerMod.LOGGER.info("Forget twitch playlist for channel " + this.channel);
+            WebStreamerClient.TWITCH_CLIENT.forgetPlaylist(this.channel);
+            WebStreamer.LOGGER.info("Forget twitch playlist for channel " + this.channel);
         }
     }
 

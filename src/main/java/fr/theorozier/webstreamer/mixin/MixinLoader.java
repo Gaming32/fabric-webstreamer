@@ -3,7 +3,7 @@ package fr.theorozier.webstreamer.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
-import fr.theorozier.webstreamer.WebStreamerClientMod;
+import fr.theorozier.webstreamer.WebStreamerClient;
 import fr.theorozier.webstreamer.util.CompoundEnumeration;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -69,7 +69,7 @@ public class MixinLoader {
         )
     )
     private static InputStream customResources(Class<?> instance, String name, Operation<InputStream> original) {
-        final InputStream result = WebStreamerClientMod.getResourceAsStream(name, instance);
+        final InputStream result = WebStreamerClient.getResourceAsStream(name, instance);
         return result != null ? result : original.call(instance, name);
     }
 
@@ -81,7 +81,7 @@ public class MixinLoader {
         )
     )
     private static InputStream customResources(ClassLoader instance, String name, Operation<InputStream> original) {
-        final InputStream result = WebStreamerClientMod.getResourceAsStream(name, null);
+        final InputStream result = WebStreamerClient.getResourceAsStream(name, null);
         return result != null ? result : original.call(instance, name);
     }
 
@@ -93,7 +93,7 @@ public class MixinLoader {
         )
     )
     private static URL customResources1(Class<?> instance, String name, Operation<URL> original) {
-        final URL result = WebStreamerClientMod.getResource(name, instance);
+        final URL result = WebStreamerClient.getResource(name, instance);
         return result != null ? result : original.call(instance, name);
     }
 
@@ -105,6 +105,6 @@ public class MixinLoader {
         )
     )
     private static Enumeration<URL> customResources1(ClassLoader instance, String name, Operation<Enumeration<URL>> original) {
-        return new CompoundEnumeration<>(WebStreamerClientMod.getResources(name, null), original.call(instance, name));
+        return new CompoundEnumeration<>(WebStreamerClient.getResources(name, null), original.call(instance, name));
     }
 }

@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WebStreamerMod implements ModInitializer {
+public class WebStreamer implements ModInitializer {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("WebStreamer");
 

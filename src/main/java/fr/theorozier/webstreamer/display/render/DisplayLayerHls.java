@@ -1,6 +1,6 @@
 package fr.theorozier.webstreamer.display.render;
 
-import fr.theorozier.webstreamer.WebStreamerMod;
+import fr.theorozier.webstreamer.WebStreamer;
 import fr.theorozier.webstreamer.display.audio.AudioStreamingSource;
 import fr.theorozier.webstreamer.display.url.DisplayUrl;
 import fr.theorozier.webstreamer.util.AsyncMap;
@@ -108,7 +108,7 @@ public class DisplayLayerHls extends DisplayLayer {
 
         this.asyncPlaylist = new AsyncProcessor<>(this::requestPlaylistBlocking, true);
         this.asyncGrabbers = new AsyncMap<>(this::requestGrabberBlocking, grabber -> {
-            WebStreamerMod.LOGGER.info(makeLog("Stopping requested but unused grabber."));
+            WebStreamer.LOGGER.info(makeLog("Stopping requested but unused grabber."));
             grabber.stop();
         }, GRABBER_REQUEST_TIMEOUT);
 
@@ -262,7 +262,7 @@ public class DisplayLayerHls extends DisplayLayer {
                     long newInterval = (long) (lastSegment.duration() * 1000000000.0 * 0.7);
                     // Only change request interval if it represents more than 10% of the current interval.
                     if (Math.abs(newInterval - this.playlistRequestInterval) >= this.playlistRequestInterval / 10) {
-                        WebStreamerMod.LOGGER.info(makeLog("New request interval: {}"), newInterval);
+                        WebStreamer.LOGGER.info(makeLog("New request interval: {}"), newInterval);
                         this.playlistRequestInterval = newInterval;
                     }
                 }
@@ -272,7 +272,7 @@ public class DisplayLayerHls extends DisplayLayer {
             // If failing, put timestamp to retry later.
             this.playlistRequestInterval = FAILING_PLAYLIST_REQUEST_INTERVAL;
             this.playlistConsecutiveFailedRequest++;
-            WebStreamerMod.LOGGER.error(makeLog("Failed to request playlist, setting interval to {} seconds."), this.playlistRequestInterval / 1000000000, e);
+            WebStreamer.LOGGER.error(makeLog("Failed to request playlist, setting interval to {} seconds."), this.playlistRequestInterval / 1000000000, e);
         });
         this.profiler.pop();
     }
@@ -303,7 +303,7 @@ public class DisplayLayerHls extends DisplayLayer {
     private void pullGrabberAndUse(int index) {
         boolean requested = this.asyncGrabbers.pull(
             index, g -> grabber = g,
-            e -> WebStreamerMod.LOGGER.error(makeLog("Failed to create and start grabber."), e)
+            e -> WebStreamer.LOGGER.error(makeLog("Failed to create and start grabber."), e)
         );
         if (!requested) {
             this.requestGrabber(index);
@@ -320,7 +320,7 @@ public class DisplayLayerHls extends DisplayLayer {
                 try {
                     this.grabber.grabRemaining(this.audioSource::queueBuffer);
                 } catch (IOException e) {
-                    WebStreamerMod.LOGGER.error(makeLog("Failed to grab remaining from current grabber."), e);
+                    WebStreamer.LOGGER.error(makeLog("Failed to grab remaining from current grabber."), e);
                 }
             } else {
                 this.audioSource.stop();
@@ -355,7 +355,7 @@ public class DisplayLayerHls extends DisplayLayer {
 
                 // If we are too slow and the current segment is now out of the playlist.
                 if (this.getCurrentSegment() == null) {
-                    WebStreamerMod.LOGGER.warn(makeLog("No current segment, reset playlist and grabber"));
+                    WebStreamer.LOGGER.warn(makeLog("No current segment, reset playlist and grabber"));
                     resetPlaylist = true;
                     resetGrabber = true;
                     break;
@@ -368,7 +368,7 @@ public class DisplayLayerHls extends DisplayLayer {
                     MediaSegment seg = this.getCurrentSegment();
 
                     if (seg == null) {
-                        WebStreamerMod.LOGGER.warn(makeLog("No next segment, reset playlist and grabber"));
+                        WebStreamer.LOGGER.warn(makeLog("No next segment, reset playlist and grabber"));
                         resetPlaylist = true;
                         resetGrabber = true;
                         break;
@@ -424,7 +424,7 @@ public class DisplayLayerHls extends DisplayLayer {
                 return;
             }
 
-            WebStreamerMod.LOGGER.info(makeLog("Initializing display layer... Found {} segments."), this.playlistSegments.size());
+            WebStreamer.LOGGER.info(makeLog("Initializing display layer... Found {} segments."), this.playlistSegments.size());
 
             this.profiler.push("initialize_layer");
 
@@ -509,7 +509,7 @@ public class DisplayLayerHls extends DisplayLayer {
                 this.profiler.push("fetch");
                 this.fetch();
             } catch (IOException e) {
-                WebStreamerMod.LOGGER.error(makeLog("Failed to fetch."), e);
+                WebStreamer.LOGGER.error(makeLog("Failed to fetch."), e);
             } finally {
                 this.profiler.pop();
             }
@@ -547,7 +547,7 @@ public class DisplayLayerHls extends DisplayLayer {
                 StringBuilder builder = new StringBuilder();
                 builder.append(" ".repeat(indent));
                 builder.append("- ").append(timing.name).append(" x").append(timing.visitCount).append(" (").append(timing.totalUsagePercentage).append(" %/").append(timing.parentSectionUsagePercentage).append("%)");
-                WebStreamerMod.LOGGER.info(builder.toString());
+                WebStreamer.LOGGER.info(builder.toString());
                 print(res, path + "\u001e" + timing.name, indent + 2);
             }
         }
